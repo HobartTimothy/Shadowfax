@@ -1,0 +1,67 @@
+{
+  "name": "shadowfax",
+  "version": "1.0.0",
+  "description": "Vue + Electron 应用程序",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:electron && vite build && electron-builder",
+    "build:electron": "vite build --config electron/vite.config.js",
+    "build:win": "npm run build:electron && vite build && electron-builder --win",
+    "build:mac": "npm run build:electron && vite build && electron-builder --mac",
+    "build:linux": "npm run build:electron && vite build && electron-builder --linux",
+    "preview": "vite preview",
+    "electron:dev": "npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:pack": "electron-builder"
+  },
+  "keywords": [
+    "vue",
+    "electron",
+    "desktop"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^39.2.7",
+    "electron-builder": "^24.9.1",
+    "vite": "^7.3.0",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "vue": "^3.4.0"
+  },
+  "build": {
+    "appId": "com.shadowfax.app",
+    "productName": "Shadowfax",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png"
+    }
+  }
+}
