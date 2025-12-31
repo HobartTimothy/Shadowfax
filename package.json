@@ -11,6 +11,13 @@
     "build:win": "npm run build:electron && vite build && electron-builder --win",
     "build:mac": "npm run build:electron && vite build && electron-builder --mac",
     "build:linux": "npm run build:electron && vite build && electron-builder --linux",
+    "build:all": "npm run build:electron && vite build && electron-builder --win --mac --linux",
+    "build:win64": "npm run build:electron && vite build && electron-builder --win --x64",
+    "build:win32": "npm run build:electron && vite build && electron-builder --win --ia32",
+    "build:mac64": "npm run build:electron && vite build && electron-builder --mac --x64",
+    "build:macarm": "npm run build:electron && vite build && electron-builder --mac --arm64",
+    "build:linux64": "npm run build:electron && vite build && electron-builder --linux --x64",
+    "build:linuxarm": "npm run build:electron && vite build && electron-builder --linux --arm64",
     "preview": "vite preview",
     "electron:dev": "node scripts/kill-port.js 5173 && npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:pack": "electron-builder"
@@ -38,30 +45,119 @@
     "appId": "com.shadowfax.app",
     "productName": "Shadowfax",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
       "package.json"
     ],
+    "extraMetadata": {
+      "main": "dist-electron/main.js"
+    },
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "publisherName": "Shadowfax"
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "category": "public.app-category.utilities",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "linux": {
       "target": [
-        "AppImage"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "desktop": {
+        "Name": "Shadowfax",
+        "Comment": "Shadowfax Desktop Application",
+        "Categories": "Utility;"
+      }
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Shadowfax"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     }
   }
 }
