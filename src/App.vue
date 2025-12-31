@@ -439,6 +439,10 @@ const filteredTreeItems = computed(() => {
       
       // 如果分组名称匹配或有匹配的子连接，则显示该分组
       if (groupMatches || matchingChildren.length > 0) {
+        // 如果有匹配项，自动展开该分组
+        if (!expandedGroups.value.includes(item.id)) {
+          expandedGroups.value.push(item.id)
+        }
         filtered.push({
           ...item,
           children: groupMatches ? item.children : matchingChildren
@@ -523,7 +527,6 @@ const confirmDeleteConnection = (connection) => {
 const showListContextMenu = (event) => {
   event.preventDefault()
   event.stopPropagation()
-  console.log('显示列表右键菜单', event)
   contextMenuPosition.value = { x: event.clientX, y: event.clientY }
   contextMenuItems.value = [
     { id: 'new-connection', label: '新建连接', icon: 'add' },
@@ -531,14 +534,12 @@ const showListContextMenu = (event) => {
   ]
   contextMenuTarget.value = { type: 'list' }
   contextMenuVisible.value = true
-  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
 }
 
 // 显示连接右键菜单
 const showConnectionContextMenu = (event, connection) => {
   event.preventDefault()
   event.stopPropagation()
-  console.log('显示连接右键菜单', event, connection)
   contextMenuPosition.value = { x: event.clientX, y: event.clientY }
   contextMenuItems.value = [
     { id: 'edit-connection', label: '编辑连接', icon: 'edit' },
@@ -546,14 +547,12 @@ const showConnectionContextMenu = (event, connection) => {
   ]
   contextMenuTarget.value = { type: 'connection', data: connection }
   contextMenuVisible.value = true
-  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
 }
 
 // 显示分组右键菜单
 const showGroupContextMenu = (event, group) => {
   event.preventDefault()
   event.stopPropagation()
-  console.log('显示分组右键菜单', event, group)
   contextMenuPosition.value = { x: event.clientX, y: event.clientY }
   contextMenuItems.value = [
     { id: 'edit-group', label: '编辑分组', icon: 'edit' },
@@ -561,7 +560,6 @@ const showGroupContextMenu = (event, group) => {
   ]
   contextMenuTarget.value = { type: 'group', data: group }
   contextMenuVisible.value = true
-  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
 }
 
 // 处理右键菜单选择
@@ -1210,66 +1208,14 @@ const closeWindow = () => {
 
 .empty-state {
   text-align: center;
-  max-width: 400px;
-}
-
-.empty-state-icon {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 24px;
-}
-
-.folder-icon {
-  width: 64px;
-  height: 64px;
-  color: #d0d0d0;
-}
-
-.close-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 20px;
-  height: 20px;
-  color: #d0d0d0;
+  padding: 40px 20px;
 }
 
 .empty-state-text {
   font-size: 14px;
-  color: #d0d0d0;
-  margin-bottom: 24px;
+  color: #999;
   line-height: 1.6;
-}
-
-.add-connection-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #ffffff;
-  color: #666;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-connection-button:hover {
-  border-color: #999;
-  color: #333;
-  background: #fafafa;
-}
-
-.add-connection-button:active {
-  background: #f5f5f5;
-}
-
-.add-icon {
-  width: 16px;
-  height: 16px;
-  color: currentColor;
+  margin: 0;
 }
 
 /* 连接详情样式 */
