@@ -80,59 +80,155 @@
       <!-- 右侧主界面 -->
       <div class="main-content">
         <!-- 连接列表 -->
-        <div class="connection-list">
-          <h3 class="connection-list-title">连接列表</h3>
-          <div class="connection-items">
-            <div 
-              v-for="connection in connections" 
-              :key="connection.id"
-              class="connection-item"
-              :class="{ active: selectedConnection?.id === connection.id }"
-              @click="selectConnection(connection)"
-              @contextmenu.prevent="showContextMenu($event, connection)"
-            >
-              <div class="connection-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-              </div>
-              <div class="connection-info">
-                <div class="connection-name">{{ connection.name }}</div>
-                <div class="connection-details">
-                  <span class="connection-host">{{ connection.host }}:{{ connection.port }}</span>
-                </div>
-                <div class="connection-status" :class="connection.status">
-                  <span class="status-dot"></span>
-                  {{ getStatusText(connection.status) }}
-                </div>
-              </div>
-              <div class="connection-actions" @click.stop>
-                <button 
-                  class="action-btn edit-btn" 
-                  @click="editConnection(connection)"
-                  title="编辑"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button 
-                  class="action-btn delete-btn" 
-                  @click="confirmDeleteConnection(connection)"
-                  title="删除"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
+        <div class="connection-list" @contextmenu.prevent="showListContextMenu">
+          <!-- 顶部工具栏 -->
+          <div class="connection-list-header">
+            <div class="header-top">
+              <img class="header-app-icon" src="/icon.jpg" alt="应用图标" />
+              <h3 class="connection-list-title">连接列表</h3>
             </div>
-            <div v-if="connections.length === 0" class="empty-connections">
+            <div class="header-toolbar">
+              <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="搜索连接..."
+                  class="search-input"
+                />
+                <button
+                  v-if="searchQuery"
+                  class="search-clear"
+                  @click="searchQuery = ''"
+                  title="清除搜索"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 4 L4 12 M4 4 L12 12"/>
+                  </svg>
+                </button>
+              </div>
+              <button class="add-connection-header-btn" @click="showAddDialog" title="添加新连接">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="connection-items">
+            <!-- 分组和连接树形结构 -->
+            <div
+              v-for="item in filteredTreeItems"
+              :key="item.id"
+              :class="[
+                item.type === 'group' ? 'group-item' : 'connection-item',
+                { 
+                  active: item.type === 'connection' && selectedConnection?.id === item.id,
+                  'group-expanded': item.type === 'group' && expandedGroups.includes(item.id),
+                  'drag-over': dragOverItemId === item.id
+                }]"
+              :draggable="item.type === 'connection'"
+              @click="item.type === 'group' ? toggleGroup(item.id) : selectConnection(item)"
+              @contextmenu.prevent="item.type === 'group' ? showGroupContextMenu($event, item) : showConnectionContextMenu($event, item)"
+              @dragstart="handleDragStart($event, item)"
+              @dragover.prevent="handleDragOver($event, item)"
+              @dragleave="handleDragLeave($event, item)"
+              @drop="handleDrop($event, item)"
+            >
+              <!-- 分组项 -->
+              <template v-if="item.type === 'group'">
+                <div class="group-header">
+                  <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                  <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span class="group-name">{{ item.name }}</span>
+                </div>
+                <div v-if="expandedGroups.includes(item.id)" class="group-children">
+                  <div
+                    v-for="child in item.children"
+                    :key="child.id"
+                    class="connection-item nested"
+                    :class="{ active: selectedConnection?.id === child.id }"
+                    :draggable="true"
+                    @click.stop="selectConnection(child)"
+                    @contextmenu.prevent.stop="showConnectionContextMenu($event, child)"
+                    @dragstart="handleDragStart($event, child)"
+                    @dragover.prevent="handleDragOver($event, child)"
+                    @dragleave="handleDragLeave($event, child)"
+                    @drop="handleDrop($event, child)"
+                  >
+                    <div class="connection-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                      </svg>
+                    </div>
+                    <div class="connection-info">
+                      <div class="connection-name">{{ child.name }}</div>
+                      <div class="connection-details">
+                        <span class="connection-host">{{ child.host }}:{{ child.port }}</span>
+                      </div>
+                      <div class="connection-status" :class="child.status">
+                        <span class="status-dot"></span>
+                        {{ getStatusText(child.status) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              
+              <!-- 连接项（根级别） -->
+              <template v-else>
+                <div class="connection-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                </div>
+                <div class="connection-info">
+                  <div class="connection-name">{{ item.name }}</div>
+                  <div class="connection-details">
+                    <span class="connection-host">{{ item.host }}:{{ item.port }}</span>
+                  </div>
+                  <div class="connection-status" :class="item.status">
+                    <span class="status-dot"></span>
+                    {{ getStatusText(item.status) }}
+                  </div>
+                </div>
+                <div class="connection-actions" @click.stop>
+                  <button 
+                    class="action-btn edit-btn" 
+                    @click="editConnection(item)"
+                    title="编辑"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button 
+                    class="action-btn delete-btn" 
+                    @click="confirmDeleteConnection(item)"
+                    title="删除"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </template>
+            </div>
+            
+            <div v-if="treeItems.length === 0" class="empty-connections">
               <p>暂无连接</p>
-              <p class="empty-hint">点击下方按钮添加新连接</p>
+              <p class="empty-hint">右键点击添加新连接或分组</p>
             </div>
           </div>
         </div>
@@ -140,23 +236,7 @@
         <!-- 主要操作区域 -->
         <div class="content-area">
           <div v-if="!selectedConnection" class="empty-state">
-            <div class="empty-state-icon">
-              <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
-              <svg class="close-badge" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="8" cy="8" r="7" fill="white" stroke="currentColor" stroke-width="1"/>
-                <path d="M5 5 L11 11 M11 5 L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
             <p class="empty-state-text">可以从左边选择并打开连接</p>
-            <button class="add-connection-button" @click="showAddDialog">
-              <svg class="add-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              <span>添加新连接</span>
-            </button>
           </div>
           <div v-else class="connection-detail">
             <div class="detail-header">
@@ -202,19 +282,44 @@
           @submit="handleConnectionSubmit"
           @cancel="handleDialogCancel"
         />
+        
+        <!-- 分组配置对话框 -->
+        <GroupDialog
+          v-model:visible="groupDialogVisible"
+          :group="editingGroup"
+          :exclude-group-id="editingGroup?.id"
+          @submit="handleGroupSubmit"
+          @cancel="handleGroupCancel"
+        />
+        
+        <!-- 右键菜单 -->
+        <ContextMenu
+          :visible="contextMenuVisible"
+          :position="contextMenuPosition"
+          :menu-items="contextMenuItems"
+          @close="contextMenuVisible = false"
+          @select="handleContextMenuSelect"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ConnectionDialog from './components/ConnectionDialog.vue'
+import GroupDialog from './components/GroupDialog.vue'
+import ContextMenu from './components/ContextMenu.vue'
 import { 
   getConnections, 
   addConnection, 
   updateConnection, 
-  deleteConnection 
+  deleteConnection,
+  getGroups,
+  addGroup,
+  updateGroup,
+  deleteGroup,
+  getChildGroups
 } from './utils/storage.js'
 
 // 侧边栏折叠状态
@@ -225,6 +330,7 @@ const activeNav = ref('connections')
 
 // 连接列表数据（从本地存储加载）
 const connections = ref([])
+const groups = ref([])
 
 // 选中的连接
 const selectedConnection = ref(null)
@@ -232,6 +338,24 @@ const selectedConnection = ref(null)
 // 对话框状态
 const dialogVisible = ref(false)
 const editingConnection = ref(null)
+const groupDialogVisible = ref(false)
+const editingGroup = ref(null)
+
+// 右键菜单状态
+const contextMenuVisible = ref(false)
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const contextMenuItems = ref([])
+const contextMenuTarget = ref(null) // 当前右键菜单的目标（连接、分组或列表）
+
+// 分组展开状态
+const expandedGroups = ref([])
+
+// 拖拽状态
+const draggedItem = ref(null)
+const dragOverItemId = ref(null)
+
+// 搜索查询
+const searchQuery = ref('')
 
 // 切换侧边栏折叠状态
 const toggleSidebar = () => {
@@ -258,9 +382,91 @@ const getStatusText = (status) => {
   return statusMap[status] || '未知'
 }
 
-// 加载连接列表
+// 加载连接列表和分组
 const loadConnections = () => {
   connections.value = getConnections()
+  groups.value = getGroups()
+}
+
+// 构建树形结构
+const treeItems = computed(() => {
+  const items = []
+  const rootGroups = groups.value.filter(g => !g.parentId)
+  const rootConnections = connections.value.filter(c => !c.groupId)
+  
+  // 添加根分组
+  rootGroups.forEach(group => {
+    const children = connections.value.filter(c => c.groupId === group.id)
+    items.push({
+      type: 'group',
+      id: group.id,
+      name: group.name,
+      ...group,
+      children: children
+    })
+  })
+  
+  // 添加根连接
+  rootConnections.forEach(conn => {
+    items.push({
+      type: 'connection',
+      ...conn
+    })
+  })
+  
+  return items
+})
+
+// 过滤树形结构（根据搜索查询）
+const filteredTreeItems = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return treeItems.value
+  }
+  
+  const query = searchQuery.value.toLowerCase().trim()
+  const filtered = []
+  
+  treeItems.value.forEach(item => {
+    if (item.type === 'group') {
+      // 检查分组名称是否匹配
+      const groupMatches = item.name.toLowerCase().includes(query)
+      // 检查分组内的连接是否匹配
+      const matchingChildren = item.children.filter(child => 
+        child.name.toLowerCase().includes(query) ||
+        child.host.toLowerCase().includes(query) ||
+        String(child.port).includes(query)
+      )
+      
+      // 如果分组名称匹配或有匹配的子连接，则显示该分组
+      if (groupMatches || matchingChildren.length > 0) {
+        filtered.push({
+          ...item,
+          children: groupMatches ? item.children : matchingChildren
+        })
+      }
+    } else {
+      // 检查连接是否匹配
+      if (
+        item.name.toLowerCase().includes(query) ||
+        item.host.toLowerCase().includes(query) ||
+        String(item.port).includes(query)
+      ) {
+        filtered.push(item)
+      }
+    }
+  })
+  
+  return filtered
+})
+
+// 切换分组展开/折叠
+const toggleGroup = (groupId) => {
+  const index = expandedGroups.value.indexOf(groupId)
+  if (index > -1) {
+    expandedGroups.value.splice(index, 1)
+  } else {
+    expandedGroups.value.push(groupId)
+  }
 }
 
 // 显示添加对话框
@@ -313,10 +519,111 @@ const confirmDeleteConnection = (connection) => {
   }
 }
 
-// 显示右键菜单（可以后续扩展）
-const showContextMenu = (event, connection) => {
-  // 可以在这里实现右键菜单
-  console.log('右键菜单:', connection)
+// 显示列表右键菜单
+const showListContextMenu = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  console.log('显示列表右键菜单', event)
+  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contextMenuItems.value = [
+    { id: 'new-connection', label: '新建连接', icon: 'add' },
+    { id: 'new-group', label: '新建分组', icon: 'folder' }
+  ]
+  contextMenuTarget.value = { type: 'list' }
+  contextMenuVisible.value = true
+  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
+}
+
+// 显示连接右键菜单
+const showConnectionContextMenu = (event, connection) => {
+  event.preventDefault()
+  event.stopPropagation()
+  console.log('显示连接右键菜单', event, connection)
+  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contextMenuItems.value = [
+    { id: 'edit-connection', label: '编辑连接', icon: 'edit' },
+    { id: 'delete-connection', label: '删除连接', icon: 'delete' }
+  ]
+  contextMenuTarget.value = { type: 'connection', data: connection }
+  contextMenuVisible.value = true
+  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
+}
+
+// 显示分组右键菜单
+const showGroupContextMenu = (event, group) => {
+  event.preventDefault()
+  event.stopPropagation()
+  console.log('显示分组右键菜单', event, group)
+  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contextMenuItems.value = [
+    { id: 'edit-group', label: '编辑分组', icon: 'edit' },
+    { id: 'new-subgroup', label: '新建子分组', icon: 'folder' }
+  ]
+  contextMenuTarget.value = { type: 'group', data: group }
+  contextMenuVisible.value = true
+  console.log('菜单状态:', contextMenuVisible.value, contextMenuPosition.value)
+}
+
+// 处理右键菜单选择
+const handleContextMenuSelect = (item) => {
+  const target = contextMenuTarget.value
+  if (!target) return
+  
+  switch (item.id) {
+    case 'new-connection':
+      showAddDialog()
+      break
+    case 'new-group':
+      showAddGroupDialog()
+      break
+    case 'edit-connection':
+      editConnection(target.data)
+      break
+    case 'delete-connection':
+      confirmDeleteConnection(target.data)
+      break
+    case 'edit-group':
+      editGroup(target.data)
+      break
+    case 'new-subgroup':
+      showAddSubGroupDialog(target.data)
+      break
+  }
+}
+
+// 显示添加分组对话框
+const showAddGroupDialog = () => {
+  editingGroup.value = null
+  groupDialogVisible.value = true
+}
+
+// 显示添加子分组对话框
+const showAddSubGroupDialog = (parentGroup) => {
+  editingGroup.value = { parentId: parentGroup.id }
+  groupDialogVisible.value = true
+}
+
+// 编辑分组
+const editGroup = (group) => {
+  editingGroup.value = group
+  groupDialogVisible.value = true
+}
+
+// 处理分组提交
+const handleGroupSubmit = (formData) => {
+  if (editingGroup.value && editingGroup.value.id) {
+    // 更新现有分组
+    updateGroup(editingGroup.value.id, formData)
+  } else {
+    // 添加新分组
+    addGroup(formData)
+  }
+  loadConnections()
+}
+
+// 处理分组取消
+const handleGroupCancel = () => {
+  editingGroup.value = null
 }
 
 // 连接到 Redis（占位函数，后续实现）
@@ -334,6 +641,37 @@ const connectToRedis = (connection) => {
     }, 1000)
   }
   loadConnections()
+}
+
+// 拖拽处理
+const handleDragStart = (event, item) => {
+  if (item.type !== 'connection') return
+  draggedItem.value = item
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', item.id)
+}
+
+const handleDragOver = (event, item) => {
+  if (item.type === 'group' && draggedItem.value) {
+    event.preventDefault()
+    dragOverItemId.value = item.id
+  }
+}
+
+const handleDragLeave = (event, item) => {
+  dragOverItemId.value = null
+}
+
+const handleDrop = (event, item) => {
+  event.preventDefault()
+  dragOverItemId.value = null
+  
+  if (item.type === 'group' && draggedItem.value) {
+    // 将连接移动到分组
+    updateConnection(draggedItem.value.id, { groupId: item.id })
+    loadConnections()
+    draggedItem.value = null
+  }
 }
 
 // 组件挂载时加载连接
@@ -534,13 +872,116 @@ const closeWindow = () => {
   overflow: hidden;
 }
 
+.connection-list-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.header-app-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .connection-list-title {
-  padding: 20px;
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  border-bottom: 1px solid #e0e0e0;
+  flex: 1;
+}
+
+.header-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 16px;
+}
+
+.search-box {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  width: 16px;
+  height: 16px;
+  color: #999;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.search-clear:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.add-connection-header-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.add-connection-header-btn:hover {
+  border-color: #2196f3;
+  color: #2196f3;
+  background: #e3f2fd;
+}
+
+.add-connection-header-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .connection-items {
@@ -685,6 +1126,76 @@ const closeWindow = () => {
 
 .connection-status.disconnected .status-dot {
   background: #999;
+}
+
+/* 分组样式 */
+.group-item {
+  margin-bottom: 4px;
+  user-select: none;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 6px;
+}
+
+.group-header:hover {
+  background: #f5f5f5;
+}
+
+.group-chevron {
+  width: 16px;
+  height: 16px;
+  color: #666;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.group-item.group-expanded .group-chevron {
+  transform: rotate(90deg);
+}
+
+.group-icon {
+  width: 18px;
+  height: 18px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.group-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.group-children {
+  padding-left: 24px;
+  margin-top: 4px;
+}
+
+.connection-item.nested {
+  margin-left: 16px;
+  padding-left: 12px;
+}
+
+.connection-item[draggable="true"] {
+  cursor: move;
+}
+
+.connection-item.drag-over {
+  background: #e3f2fd;
+  border: 2px dashed #2196f3;
+}
+
+.group-item.drag-over .group-header {
+  background: #e3f2fd;
+  border: 2px dashed #2196f3;
 }
 
 /* 内容区域 */
