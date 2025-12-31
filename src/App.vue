@@ -89,6 +89,7 @@
               class="connection-item"
               :class="{ active: selectedConnection?.id === connection.id }"
               @click="selectConnection(connection)"
+              @contextmenu.prevent="showContextMenu($event, connection)"
             >
               <div class="connection-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -98,20 +99,58 @@
               </div>
               <div class="connection-info">
                 <div class="connection-name">{{ connection.name }}</div>
+                <div class="connection-details">
+                  <span class="connection-host">{{ connection.host }}:{{ connection.port }}</span>
+                </div>
                 <div class="connection-status" :class="connection.status">
                   <span class="status-dot"></span>
                   {{ getStatusText(connection.status) }}
                 </div>
               </div>
+              <div class="connection-actions" @click.stop>
+                <button 
+                  class="action-btn edit-btn" 
+                  @click="editConnection(connection)"
+                  title="编辑"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button 
+                  class="action-btn delete-btn" 
+                  @click="confirmDeleteConnection(connection)"
+                  title="删除"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div v-if="connections.length === 0" class="empty-connections">
+              <p>暂无连接</p>
+              <p class="empty-hint">点击下方按钮添加新连接</p>
             </div>
           </div>
         </div>
 
         <!-- 主要操作区域 -->
         <div class="content-area">
-          <div class="empty-state">
+          <div v-if="!selectedConnection" class="empty-state">
+            <div class="empty-state-icon">
+              <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <svg class="close-badge" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="8" r="7" fill="white" stroke="currentColor" stroke-width="1"/>
+                <path d="M5 5 L11 11 M11 5 L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
             <p class="empty-state-text">可以从左边选择并打开连接</p>
-            <button class="add-connection-button" @click="addConnection">
+            <button class="add-connection-button" @click="showAddDialog">
               <svg class="add-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
@@ -119,14 +158,64 @@
               <span>添加新连接</span>
             </button>
           </div>
+          <div v-else class="connection-detail">
+            <div class="detail-header">
+              <h3>{{ selectedConnection.name }}</h3>
+              <button class="close-detail-btn" @click="selectedConnection = null" title="关闭">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 4 L4 12 M4 4 L12 12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="detail-content">
+              <div class="detail-item">
+                <label>主机地址：</label>
+                <span>{{ selectedConnection.host }}</span>
+              </div>
+              <div class="detail-item">
+                <label>端口：</label>
+                <span>{{ selectedConnection.port }}</span>
+              </div>
+              <div class="detail-item">
+                <label>数据库索引：</label>
+                <span>{{ selectedConnection.database || 0 }}</span>
+              </div>
+              <div class="detail-item">
+                <label>状态：</label>
+                <span :class="['status-badge', selectedConnection.status]">
+                  {{ getStatusText(selectedConnection.status) }}
+                </span>
+              </div>
+              <div class="detail-actions">
+                <button class="btn btn-connect" @click="connectToRedis(selectedConnection)">
+                  {{ selectedConnection.status === 'connected' ? '断开连接' : '连接' }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+        
+        <!-- 连接配置对话框 -->
+        <ConnectionDialog
+          v-model:visible="dialogVisible"
+          :connection="editingConnection"
+          @submit="handleConnectionSubmit"
+          @cancel="handleDialogCancel"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import ConnectionDialog from './components/ConnectionDialog.vue'
+import { 
+  getConnections, 
+  addConnection, 
+  updateConnection, 
+  deleteConnection 
+} from './utils/storage.js'
 
 // 侧边栏折叠状态
 const isSidebarCollapsed = ref(false)
@@ -134,15 +223,15 @@ const isSidebarCollapsed = ref(false)
 // 当前激活的导航项
 const activeNav = ref('connections')
 
-// 连接列表数据
-const connections = ref([
-  { id: 1, name: '生产服务器', status: 'connected' },
-  { id: 2, name: '测试数据库', status: 'disconnected' },
-  { id: 3, name: '开发环境', status: 'connecting' },
-])
+// 连接列表数据（从本地存储加载）
+const connections = ref([])
 
 // 选中的连接
 const selectedConnection = ref(null)
+
+// 对话框状态
+const dialogVisible = ref(false)
+const editingConnection = ref(null)
 
 // 切换侧边栏折叠状态
 const toggleSidebar = () => {
@@ -169,20 +258,88 @@ const getStatusText = (status) => {
   return statusMap[status] || '未知'
 }
 
-// 添加新连接
-let isAddingConnection = false
-const addConnection = () => {
-  if (isAddingConnection) {
-    return // 防止重复调用
-  }
-  isAddingConnection = true
-  console.log('添加新连接')
-  // TODO: 实现添加连接的逻辑
-  // 使用 setTimeout 确保在下一个事件循环中重置标志
-  setTimeout(() => {
-    isAddingConnection = false
-  }, 100)
+// 加载连接列表
+const loadConnections = () => {
+  connections.value = getConnections()
 }
+
+// 显示添加对话框
+const showAddDialog = () => {
+  editingConnection.value = null
+  dialogVisible.value = true
+}
+
+// 编辑连接
+const editConnection = (connection) => {
+  editingConnection.value = connection
+  dialogVisible.value = true
+}
+
+// 处理连接提交（添加或更新）
+const handleConnectionSubmit = (formData) => {
+  if (editingConnection.value) {
+    // 更新现有连接
+    const updated = updateConnection(editingConnection.value.id, formData)
+    if (updated) {
+      loadConnections()
+      // 如果正在编辑的连接是当前选中的，更新选中状态
+      if (selectedConnection.value?.id === updated.id) {
+        selectedConnection.value = updated
+      }
+    }
+  } else {
+    // 添加新连接
+    const newConnection = addConnection(formData)
+    loadConnections()
+    // 自动选中新添加的连接
+    selectedConnection.value = newConnection
+  }
+}
+
+// 处理对话框取消
+const handleDialogCancel = () => {
+  editingConnection.value = null
+}
+
+// 确认删除连接
+const confirmDeleteConnection = (connection) => {
+  if (confirm(`确定要删除连接 "${connection.name}" 吗？`)) {
+    deleteConnection(connection.id)
+    loadConnections()
+    // 如果删除的是当前选中的连接，清空选中状态
+    if (selectedConnection.value?.id === connection.id) {
+      selectedConnection.value = null
+    }
+  }
+}
+
+// 显示右键菜单（可以后续扩展）
+const showContextMenu = (event, connection) => {
+  // 可以在这里实现右键菜单
+  console.log('右键菜单:', connection)
+}
+
+// 连接到 Redis（占位函数，后续实现）
+const connectToRedis = (connection) => {
+  console.log('连接到 Redis:', connection)
+  // TODO: 实现实际的 Redis 连接逻辑
+  if (connection.status === 'connected') {
+    updateConnection(connection.id, { status: 'disconnected' })
+  } else {
+    updateConnection(connection.id, { status: 'connecting' })
+    // 模拟连接过程
+    setTimeout(() => {
+      updateConnection(connection.id, { status: 'connected' })
+      loadConnections()
+    }, 1000)
+  }
+  loadConnections()
+}
+
+// 组件挂载时加载连接
+onMounted(() => {
+  loadConnections()
+})
 
 // 窗口控制
 const minimizeWindow = () => {
@@ -438,6 +595,71 @@ const closeWindow = () => {
   margin-bottom: 4px;
 }
 
+.connection-details {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.connection-host {
+  font-family: monospace;
+}
+
+.connection-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.connection-item:hover .connection-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f0f0f0;
+}
+
+.edit-btn:hover {
+  color: #2196f3;
+  background: #e3f2fd;
+}
+
+.delete-btn:hover {
+  color: #f44336;
+  background: #ffebee;
+}
+
+.empty-connections {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.empty-connections p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #bbb;
+}
+
 .connection-status {
   font-size: 12px;
   color: #999;
@@ -472,7 +694,7 @@ const closeWindow = () => {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .empty-state {
@@ -480,9 +702,30 @@ const closeWindow = () => {
   max-width: 400px;
 }
 
+.empty-state-icon {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.folder-icon {
+  width: 64px;
+  height: 64px;
+  color: #d0d0d0;
+}
+
+.close-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  color: #d0d0d0;
+}
+
 .empty-state-text {
   font-size: 14px;
-  color: #999;
+  color: #d0d0d0;
   margin-bottom: 24px;
   line-height: 1.6;
 }
@@ -491,30 +734,157 @@ const closeWindow = () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: #2196f3;
-  color: white;
-  border: none;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: #666;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-connection-button:hover {
+  border-color: #999;
+  color: #333;
+  background: #fafafa;
+}
+
+.add-connection-button:active {
+  background: #f5f5f5;
+}
+
+.add-icon {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+}
+
+/* 连接详情样式 */
+.connection-detail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-detail-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.close-detail-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.detail-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.detail-item label {
+  font-weight: 500;
+  color: #666;
+  min-width: 100px;
+  font-size: 14px;
+}
+
+.detail-item span {
+  color: #333;
+  font-size: 14px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.connected {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.disconnected {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.status-badge.connecting {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.detail-actions {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
 }
 
-.add-connection-button:hover {
-  background: #1976d2;
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
-  transform: translateY(-1px);
+.btn-connect {
+  background: #4caf50;
+  color: white;
 }
 
-.add-connection-button:active {
-  transform: translateY(0);
-}
-
-.add-icon {
-  width: 18px;
-  height: 18px;
+.btn-connect:hover {
+  background: #45a049;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 </style>
