@@ -6,34 +6,38 @@ import {fileURLToPath} from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// 共享的外部依赖配置
+const external = [
+    'electron',
+    'path',
+    'url',
+    'fs',
+    'os',
+    'child_process'
+]
+
+// 从环境变量获取要构建的目标（main 或 preload）
+const buildTarget = process.env.BUILD_TARGET || 'main'
+
 export default defineConfig({
     build: {
         outDir: 'dist-electron',
-        emptyOutDir: true,
-        // 关键修复 1: 设置构建目标为 Node.js 环境，而不是浏览器
+        emptyOutDir: buildTarget === 'main', // 只在构建 main 时清空
         target: 'node18',
         rollupOptions: {
-            input: {
-                main: resolve(__dirname, 'main.js'),
-                preload: resolve(__dirname, 'preload.js'),
-            },
+            input: buildTarget === 'preload' 
+                ? { preload: resolve(__dirname, 'preload.js') }
+                : { main: resolve(__dirname, 'main.js') },
             output: {
                 entryFileNames: '[name].js',
-                // 保持 ESM 格式，因为你的 package.json 是 type: module
-                format: 'es',
+                // preload 使用 CommonJS，main 使用 ES 模块
+                format: buildTarget === 'preload' ? 'cjs' : 'es',
             },
-            // 关键修复 2: 显式将 Electron 和 Node 内置模块设为外部依赖
-            // 防止 Vite 尝试将它们打包成浏览器代码
-            external: [
-                'electron',
-                'path',
-                'url',
-                'fs',
-                'os',
-                'child_process'
-            ],
+            external,
         },
-        // 可选: 关闭压缩以便于调试构建后的代码
         minify: false,
+    },
+    define: {
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     },
 });

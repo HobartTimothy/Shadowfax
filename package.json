@@ -7,12 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:electron && vite build && electron-builder",
-    "build:electron": "vite build --config electron/vite.config.js",
+    "build:electron": "cross-env BUILD_TARGET=main vite build --config electron/vite.config.js && cross-env BUILD_TARGET=preload vite build --config electron/vite.config.js",
     "build:win": "npm run build:electron && vite build && electron-builder --win",
     "build:mac": "npm run build:electron && vite build && electron-builder --mac",
     "build:linux": "npm run build:electron && vite build && electron-builder --linux",
     "preview": "vite preview",
-    "electron:dev": "npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:dev": "node scripts/kill-port.js 5173 && npm run build:electron && concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:pack": "electron-builder"
   },
   "keywords": [
