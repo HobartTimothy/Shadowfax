@@ -84,7 +84,6 @@
           <!-- 顶部工具栏 -->
           <div class="connection-list-header">
             <div class="header-top">
-              <img class="header-app-icon" src="/icon.jpg" alt="应用图标" />
               <h3 class="connection-list-title">连接列表</h3>
             </div>
             <div class="header-toolbar">
@@ -150,35 +149,139 @@
                   <span class="group-name">{{ item.name }}</span>
                 </div>
                 <div v-if="expandedGroups.includes(item.id)" class="group-children">
+                  <!-- 递归渲染子项（子分组或连接） -->
                   <div
                     v-for="child in item.children"
                     :key="child.id"
-                    class="connection-item nested"
-                    :class="{ active: selectedConnection?.id === child.id }"
-                    :draggable="true"
-                    @click.stop="selectConnection(child)"
-                    @contextmenu.prevent.stop="showConnectionContextMenu($event, child)"
+                    :class="[
+                      child.type === 'group' ? 'group-item nested' : 'connection-item nested',
+                      { 
+                        active: child.type === 'connection' && selectedConnection?.id === child.id,
+                        'group-expanded': child.type === 'group' && expandedGroups.includes(child.id),
+                        'drag-over': dragOverItemId === child.id
+                      }]"
+                    :draggable="child.type === 'connection'"
+                    @click.stop="child.type === 'group' ? toggleGroup(child.id) : selectConnection(child)"
+                    @contextmenu.prevent.stop="child.type === 'group' ? showGroupContextMenu($event, child) : showConnectionContextMenu($event, child)"
                     @dragstart="handleDragStart($event, child)"
                     @dragover.prevent="handleDragOver($event, child)"
                     @dragleave="handleDragLeave($event, child)"
                     @drop="handleDrop($event, child)"
                   >
-                    <div class="connection-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                      </svg>
-                    </div>
-                    <div class="connection-info">
-                      <div class="connection-name">{{ child.name }}</div>
-                      <div class="connection-details">
-                        <span class="connection-host">{{ child.host }}:{{ child.port }}</span>
+                    <!-- 子分组 -->
+                    <template v-if="child.type === 'group'">
+                      <div class="group-header">
+                        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                        <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span class="group-name">{{ child.name }}</span>
                       </div>
-                      <div class="connection-status" :class="child.status">
-                        <span class="status-dot"></span>
-                        {{ getStatusText(child.status) }}
+                      <div v-if="expandedGroups.includes(child.id)" class="group-children">
+                        <div
+                          v-for="grandchild in child.children"
+                          :key="grandchild.id"
+                          :class="[
+                            grandchild.type === 'group' ? 'group-item nested' : 'connection-item nested',
+                            { 
+                              active: grandchild.type === 'connection' && selectedConnection?.id === grandchild.id,
+                              'group-expanded': grandchild.type === 'group' && expandedGroups.includes(grandchild.id),
+                              'drag-over': dragOverItemId === grandchild.id
+                            }]"
+                          :draggable="grandchild.type === 'connection'"
+                          @click.stop="grandchild.type === 'group' ? toggleGroup(grandchild.id) : selectConnection(grandchild)"
+                          @contextmenu.prevent.stop="grandchild.type === 'group' ? showGroupContextMenu($event, grandchild) : showConnectionContextMenu($event, grandchild)"
+                          @dragstart="handleDragStart($event, grandchild)"
+                          @dragover.prevent="handleDragOver($event, grandchild)"
+                          @dragleave="handleDragLeave($event, grandchild)"
+                          @drop="handleDrop($event, grandchild)"
+                        >
+                          <template v-if="grandchild.type === 'group'">
+                            <div class="group-header">
+                              <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                              </svg>
+                              <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                              </svg>
+                              <span class="group-name">{{ grandchild.name }}</span>
+                            </div>
+                            <div v-if="expandedGroups.includes(grandchild.id)" class="group-children">
+                              <!-- 这里可以继续递归，但为了简化，我们只支持3层 -->
+                              <div
+                                v-for="greatGrandchild in grandchild.children"
+                                :key="greatGrandchild.id"
+                                class="connection-item nested"
+                                :class="{ active: selectedConnection?.id === greatGrandchild.id }"
+                                :draggable="true"
+                                @click.stop="selectConnection(greatGrandchild)"
+                                @contextmenu.prevent.stop="showConnectionContextMenu($event, greatGrandchild)"
+                                @dragstart="handleDragStart($event, greatGrandchild)"
+                                @dragover.prevent="handleDragOver($event, greatGrandchild)"
+                                @dragleave="handleDragLeave($event, greatGrandchild)"
+                                @drop="handleDrop($event, greatGrandchild)"
+                              >
+                                <div class="connection-icon">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                  </svg>
+                                </div>
+                                <div class="connection-info">
+                                  <div class="connection-name">{{ greatGrandchild.name }}</div>
+                                  <div class="connection-details">
+                                    <span class="connection-host">{{ greatGrandchild.host }}:{{ greatGrandchild.port }}</span>
+                                  </div>
+                                  <div class="connection-status" :class="greatGrandchild.status">
+                                    <span class="status-dot"></span>
+                                    {{ getStatusText(greatGrandchild.status) }}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </template>
+                          <template v-else>
+                            <div class="connection-icon">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                              </svg>
+                            </div>
+                            <div class="connection-info">
+                              <div class="connection-name">{{ grandchild.name }}</div>
+                              <div class="connection-details">
+                                <span class="connection-host">{{ grandchild.host }}:{{ grandchild.port }}</span>
+                              </div>
+                              <div class="connection-status" :class="grandchild.status">
+                                <span class="status-dot"></span>
+                                {{ getStatusText(grandchild.status) }}
+                              </div>
+                            </div>
+                          </template>
+                        </div>
                       </div>
-                    </div>
+                    </template>
+                    <!-- 连接 -->
+                    <template v-else>
+                      <div class="connection-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 6v6l4 2"/>
+                        </svg>
+                      </div>
+                      <div class="connection-info">
+                        <div class="connection-name">{{ child.name }}</div>
+                        <div class="connection-details">
+                          <span class="connection-host">{{ child.host }}:{{ child.port }}</span>
+                        </div>
+                        <div class="connection-status" :class="child.status">
+                          <span class="status-dot"></span>
+                          {{ getStatusText(child.status) }}
+                        </div>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </template>
@@ -269,7 +372,7 @@
               <div class="detail-actions">
                 <button class="btn btn-connect" @click="connectToRedis(selectedConnection)">
                   {{ selectedConnection.status === 'connected' ? '断开连接' : '连接' }}
-                </button>
+          </button>
               </div>
             </div>
           </div>
@@ -288,6 +391,7 @@
           v-model:visible="groupDialogVisible"
           :group="editingGroup"
           :exclude-group-id="editingGroup?.id"
+          :fixed-parent-id="editingGroup?.parentId && !editingGroup?.id ? editingGroup.parentId : null"
           @submit="handleGroupSubmit"
           @cancel="handleGroupCancel"
         />
@@ -388,26 +492,27 @@ const loadConnections = () => {
   groups.value = getGroups()
 }
 
-// 构建树形结构
-const treeItems = computed(() => {
-  const items = []
-  const rootGroups = groups.value.filter(g => !g.parentId)
-  const rootConnections = connections.value.filter(c => !c.groupId)
+// 递归构建分组树形结构
+function buildGroupTree(parentId = null) {
+  const groupChildren = groups.value.filter(g => g.parentId === parentId)
+  const connectionChildren = connections.value.filter(c => c.groupId === parentId)
   
-  // 添加根分组
-  rootGroups.forEach(group => {
-    const children = connections.value.filter(c => c.groupId === group.id)
+  const items = []
+  
+  // 添加子分组（递归）
+  groupChildren.forEach(group => {
+    const subItems = buildGroupTree(group.id)
     items.push({
       type: 'group',
       id: group.id,
       name: group.name,
       ...group,
-      children: children
+      children: subItems
     })
   })
   
-  // 添加根连接
-  rootConnections.forEach(conn => {
+  // 添加连接
+  connectionChildren.forEach(conn => {
     items.push({
       type: 'connection',
       ...conn
@@ -415,6 +520,11 @@ const treeItems = computed(() => {
   })
   
   return items
+}
+
+// 构建树形结构
+const treeItems = computed(() => {
+  return buildGroupTree()
 })
 
 // 过滤树形结构（根据搜索查询）
@@ -549,15 +659,35 @@ const showConnectionContextMenu = (event, connection) => {
   contextMenuVisible.value = true
 }
 
+// 计算分组的层数（从根到该分组的深度，根分组为1）
+function getGroupDepth(groupId) {
+  const allGroups = getGroups()
+  const group = allGroups.find(g => g.id === groupId)
+  if (!group) return 0
+  if (!group.parentId) return 1
+  return 1 + getGroupDepth(group.parentId)
+}
+
 // 显示分组右键菜单
 const showGroupContextMenu = (event, group) => {
   event.preventDefault()
   event.stopPropagation()
   contextMenuPosition.value = { x: event.clientX, y: event.clientY }
-  contextMenuItems.value = [
-    { id: 'edit-group', label: '编辑分组', icon: 'edit' },
-    { id: 'new-subgroup', label: '新建子分组', icon: 'folder' }
+  
+  // 计算当前分组的层数
+  const currentDepth = getGroupDepth(group.id)
+  
+  // 构建菜单项：如果层数已达到3层，不显示"新建子分组"
+  const menuItems = [
+    { id: 'edit-group', label: '编辑分组', icon: 'edit' }
   ]
+  
+  // 只有层数小于3时才显示"新建子分组"
+  if (currentDepth < 3) {
+    menuItems.push({ id: 'new-subgroup', label: '新建子分组', icon: 'folder' })
+  }
+  
+  contextMenuItems.value = menuItems
   contextMenuTarget.value = { type: 'group', data: group }
   contextMenuVisible.value = true
 }
@@ -614,7 +744,11 @@ const handleGroupSubmit = (formData) => {
     updateGroup(editingGroup.value.id, formData)
   } else {
     // 添加新分组
-    addGroup(formData)
+    const newGroup = addGroup(formData)
+    // 如果有父分组，自动展开父分组
+    if (formData.parentId && !expandedGroups.value.includes(formData.parentId)) {
+      expandedGroups.value.push(formData.parentId)
+    }
   }
   loadConnections()
 }
@@ -879,14 +1013,6 @@ const closeWindow = () => {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-}
-
-.header-app-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  border-radius: 4px;
-  flex-shrink: 0;
 }
 
 .connection-list-title {

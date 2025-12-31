@@ -7,7 +7,7 @@ async function killPort(port) {
   try {
     // Windows 命令：查找占用端口的进程
     const { stdout } = await execAsync(`netstat -ano | findstr :${port}`)
-    
+
     if (!stdout) {
       console.log(`端口 ${port} 未被占用`)
       return
@@ -16,7 +16,7 @@ async function killPort(port) {
     // 提取进程 ID
     const lines = stdout.trim().split('\n')
     const pids = new Set()
-    
+
     for (const line of lines) {
       const match = line.match(/\s+(\d+)\s*$/)
       if (match) {
@@ -44,4 +44,3 @@ async function killPort(port) {
 
 const port = process.argv[2] || '5173'
 killPort(port)
-

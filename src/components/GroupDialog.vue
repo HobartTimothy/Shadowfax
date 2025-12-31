@@ -27,6 +27,7 @@
           <div v-if="showParentSelect" class="form-group">
             <label for="parentId">父分组</label>
             <select
+              v-if="!fixedParentId"
               id="parentId"
               v-model="formData.parentId"
               class="form-input"
@@ -40,6 +41,14 @@
                 {{ group.name }}
               </option>
             </select>
+            <input
+              v-else
+              id="parentId"
+              :value="parentGroupName"
+              class="form-input form-input-disabled"
+              readonly
+              disabled
+            />
           </div>
 
           <div class="form-actions">
@@ -76,6 +85,10 @@ const props = defineProps({
   showParentSelect: {
     type: Boolean,
     default: true
+  },
+  fixedParentId: {
+    type: String,
+    default: null
   }
 })
 
@@ -87,14 +100,34 @@ const formData = ref({
   parentId: null
 })
 
+// 计算分组的层数（从根到该分组的深度，根分组为1）
+function getGroupDepth(groupId) {
+  const groups = getGroups()
+  const group = groups.find(g => g.id === groupId)
+  if (!group) return 0
+  if (!group.parentId) return 1
+  return 1 + getGroupDepth(group.parentId)
+}
+
 const availableParents = computed(() => {
   const groups = getGroups()
   // 排除当前编辑的分组及其子分组（避免循环引用）
+  // 同时排除已经达到最大层数（3层）的分组
   return groups.filter(g => {
     if (g.id === props.excludeGroupId) return false
     if (props.excludeGroupId && isDescendantOf(g, props.excludeGroupId)) return false
+    // 如果选择该分组作为父分组会导致超过3层，则排除
+    const currentDepth = getGroupDepth(g.id)
+    if (currentDepth >= 3) return false
     return true
   })
+})
+
+const parentGroupName = computed(() => {
+  if (!props.fixedParentId) return ''
+  const groups = getGroups()
+  const parent = groups.find(g => g.id === props.fixedParentId)
+  return parent ? parent.name : ''
 })
 
 function isDescendantOf(group, ancestorId) {
@@ -104,23 +137,31 @@ function isDescendantOf(group, ancestorId) {
   return parent ? isDescendantOf(parent, ancestorId) : false
 }
 
-// 监听 group 变化，填充表单
-watch(() => props.group, (newGroup) => {
-  if (newGroup) {
-    isEdit.value = true
-    formData.value = {
-      name: newGroup.name || '',
-      parentId: newGroup.parentId || null
+// 监听 visible 变化，打开时初始化表单
+watch(() => props.visible, (newVisible) => {
+  if (newVisible) {
+    // 对话框打开时，根据 group prop 初始化表单
+    if (props.group && props.group.id) {
+      // 编辑模式
+      isEdit.value = true
+      formData.value = {
+        name: props.group.name || '',
+        parentId: props.group.parentId || null
+      }
+    } else if (props.group && props.group.parentId) {
+      // 新建子分组模式
+      isEdit.value = false
+      formData.value = {
+        name: '',
+        parentId: props.group.parentId
+      }
+    } else {
+      // 新建根分组模式
+      isEdit.value = false
+      resetForm()
     }
   } else {
-    isEdit.value = false
-    resetForm()
-  }
-}, { immediate: true })
-
-// 监听 visible 变化，重置表单
-watch(() => props.visible, (newVisible) => {
-  if (!newVisible) {
+    // 对话框关闭时重置表单
     resetForm()
   }
 })
@@ -134,6 +175,15 @@ function resetForm() {
 }
 
 function handleSubmit() {
+  // 验证层数限制
+  if (formData.value.parentId) {
+    const parentDepth = getGroupDepth(formData.value.parentId)
+    if (parentDepth >= 3) {
+      alert('分组层数最多为3层，无法在该分组下创建子分组')
+      return
+    }
+  }
+  
   emit('submit', { ...formData.value })
   emit('update:visible', false)
 }
@@ -261,6 +311,12 @@ function handleCancel() {
 
 .form-input::placeholder {
   color: #999;
+}
+
+.form-input-disabled {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
 }
 
 .form-actions {
