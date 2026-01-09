@@ -60,20 +60,22 @@ npm run electron:dev
 
 1. 准备一个 512x512 或更大的 PNG 图标源文件
 2. 转换为各平台所需格式：
-   - **Windows**: `build/icon.ico`
-   - **macOS**: `build/icon.icns`
-   - **Linux**: `build/icon.png`
+    - **Windows**: `build/icon.ico`
+    - **macOS**: `build/icon.icns`
+    - **Linux**: `build/icon.png`
 
 详细说明请参考 `build/README.md`
 
 #### 打包命令
 
 **构建所有平台：**
+
 ```bash
 npm run build:all
 ```
 
 **构建特定平台：**
+
 ```bash
 # Windows (包含 x64 和 ia32，生成 NSIS 安装程序和便携版)
 npm run build:win
@@ -86,6 +88,7 @@ npm run build:linux
 ```
 
 **构建特定架构：**
+
 ```bash
 # Windows x64
 npm run build:win64
@@ -107,6 +110,7 @@ npm run build:linuxarm
 ```
 
 **默认构建（当前平台）：**
+
 ```bash
 npm run build
 ```
@@ -115,16 +119,16 @@ npm run build
 
 所有构建产物将输出到 `release` 目录：
 
-- **Windows**: 
-  - `Shadowfax-{version}-x64.exe` (NSIS 安装程序)
-  - `Shadowfax-{version}-x64-portable.exe` (便携版)
-- **macOS**: 
-  - `Shadowfax-{version}-x64.dmg` / `Shadowfax-{version}-arm64.dmg`
-  - `Shadowfax-{version}-x64.zip` / `Shadowfax-{version}-arm64.zip`
-- **Linux**: 
-  - `Shadowfax-{version}-x64.AppImage` / `Shadowfax-{version}-arm64.AppImage`
-  - `Shadowfax-{version}-x64.deb` / `Shadowfax-{version}-arm64.deb`
-  - `Shadowfax-{version}-x64.rpm`
+- **Windows**:
+    - `Shadowfax-{version}-x64.exe` (NSIS 安装程序)
+    - `Shadowfax-{version}-x64-portable.exe` (便携版)
+- **macOS**:
+    - `Shadowfax-{version}-x64.dmg` / `Shadowfax-{version}-arm64.dmg`
+    - `Shadowfax-{version}-x64.zip` / `Shadowfax-{version}-arm64.zip`
+- **Linux**:
+    - `Shadowfax-{version}-x64.AppImage` / `Shadowfax-{version}-arm64.AppImage`
+    - `Shadowfax-{version}-x64.deb` / `Shadowfax-{version}-arm64.deb`
+    - `Shadowfax-{version}-x64.rpm`
 
 ## 功能特性
 

@@ -11,7 +11,7 @@ let mainWindow
 function createWindow() {
     // 获取图标路径
     const iconPath = join(__dirname, '../resources/icon/redis.jpg')
-    
+
     // 创建浏览器窗口
     mainWindow = new BrowserWindow({
         width: 1200,
@@ -29,7 +29,7 @@ function createWindow() {
     // 加载应用
     // 使用 app.isPackaged 检测是否为开发环境（更可靠，不依赖环境变量）
     const isDev = !app.isPackaged
-    
+
     if (isDev) {
         // 开发环境：连接到 Vite 开发服务器
         const devServerUrl = 'http://localhost:5173'

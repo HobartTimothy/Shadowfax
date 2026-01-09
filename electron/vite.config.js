@@ -25,9 +25,9 @@ export default defineConfig({
         emptyOutDir: buildTarget === 'main', // 只在构建 main 时清空
         target: 'node18',
         rollupOptions: {
-            input: buildTarget === 'preload' 
-                ? { preload: resolve(__dirname, 'preload.js') }
-                : { main: resolve(__dirname, 'main.js') },
+            input: buildTarget === 'preload'
+                ? {preload: resolve(__dirname, 'preload.js')}
+                : {main: resolve(__dirname, 'main.js')},
             output: {
                 entryFileNames: '[name].js',
                 // preload 使用 CommonJS，main 使用 ES 模块

@@ -28,15 +28,15 @@
       <aside class="sidebar" :class="{ collapsed: isSidebarCollapsed }">
         <!-- 应用图标（折叠/展开触发器） -->
         <button class="app-icon-button" @click="toggleSidebar" title="折叠/展开侧边栏">
-          <img class="app-icon" src="/icon.jpg" alt="应用图标" />
+          <img class="app-icon" src="/icon.jpg" alt="应用图标"/>
         </button>
 
         <!-- 导航菜单 -->
         <nav class="sidebar-nav">
-          <button 
-            class="nav-item" 
-            :class="{ active: activeNav === 'connections' }"
-            @click="setActiveNav('connections')"
+          <button
+              class="nav-item"
+              :class="{ active: activeNav === 'connections' }"
+              @click="setActiveNav('connections')"
           >
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -44,11 +44,11 @@
             </svg>
             <span class="nav-label" v-show="!isSidebarCollapsed">我的连接</span>
           </button>
-          
-          <button 
-            class="nav-item" 
-            :class="{ active: activeNav === 'logs' }"
-            @click="setActiveNav('logs')"
+
+          <button
+              class="nav-item"
+              :class="{ active: activeNav === 'logs' }"
+              @click="setActiveNav('logs')"
           >
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -63,14 +63,15 @@
 
         <!-- 设置按钮（底部） -->
         <div class="sidebar-footer">
-          <button 
-            class="nav-item settings" 
-            :class="{ active: activeNav === 'settings' }"
-            @click="setActiveNav('settings')"
+          <button
+              class="nav-item settings"
+              :class="{ active: activeNav === 'settings' }"
+              @click="setActiveNav('settings')"
           >
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+              <path
+                  d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
             </svg>
             <span class="nav-label" v-show="!isSidebarCollapsed">设置</span>
           </button>
@@ -93,16 +94,16 @@
                   <path d="m21 21-4.35-4.35"/>
                 </svg>
                 <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="搜索连接..."
-                  class="search-input"
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="搜索连接..."
+                    class="search-input"
                 />
                 <button
-                  v-if="searchQuery"
-                  class="search-clear"
-                  @click="searchQuery = ''"
-                  title="清除搜索"
+                    v-if="searchQuery"
+                    class="search-clear"
+                    @click="searchQuery = ''"
+                    title="清除搜索"
                 >
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 4 L4 12 M4 4 L12 12"/>
@@ -120,22 +121,22 @@
           <div class="connection-items">
             <!-- 分组和连接树形结构 -->
             <div
-              v-for="item in filteredTreeItems"
-              :key="item.id"
-              :class="[
+                v-for="item in filteredTreeItems"
+                :key="item.id"
+                :class="[
                 item.type === 'group' ? 'group-item' : 'connection-item',
-                { 
+                {
                   active: item.type === 'connection' && selectedConnection?.id === item.id,
                   'group-expanded': item.type === 'group' && expandedGroups.includes(item.id),
                   'drag-over': dragOverItemId === item.id
                 }]"
-              :draggable="item.type === 'connection'"
-              @click="item.type === 'group' ? toggleGroup(item.id) : selectConnection(item)"
-              @contextmenu.prevent="item.type === 'group' ? showGroupContextMenu($event, item) : showConnectionContextMenu($event, item)"
-              @dragstart="handleDragStart($event, item)"
-              @dragover.prevent="handleDragOver($event, item)"
-              @dragleave="handleDragLeave($event, item)"
-              @drop="handleDrop($event, item)"
+                :draggable="item.type === 'connection'"
+                @click="item.type === 'group' ? toggleGroup(item.id) : selectConnection(item)"
+                @contextmenu.prevent="item.type === 'group' ? showGroupContextMenu($event, item) : showConnectionContextMenu($event, item)"
+                @dragstart="handleDragStart($event, item)"
+                @dragover.prevent="handleDragOver($event, item)"
+                @dragleave="handleDragLeave($event, item)"
+                @drop="handleDrop($event, item)"
             >
               <!-- 分组项 -->
               <template v-if="item.type === 'group'">
@@ -151,27 +152,28 @@
                 <div v-if="expandedGroups.includes(item.id)" class="group-children">
                   <!-- 递归渲染子项（子分组或连接） -->
                   <div
-                    v-for="child in item.children"
-                    :key="child.id"
-                    :class="[
+                      v-for="child in item.children"
+                      :key="child.id"
+                      :class="[
                       child.type === 'group' ? 'group-item nested' : 'connection-item nested',
-                      { 
+                      {
                         active: child.type === 'connection' && selectedConnection?.id === child.id,
                         'group-expanded': child.type === 'group' && expandedGroups.includes(child.id),
                         'drag-over': dragOverItemId === child.id
                       }]"
-                    :draggable="child.type === 'connection'"
-                    @click.stop="child.type === 'group' ? toggleGroup(child.id) : selectConnection(child)"
-                    @contextmenu.prevent.stop="child.type === 'group' ? showGroupContextMenu($event, child) : showConnectionContextMenu($event, child)"
-                    @dragstart="handleDragStart($event, child)"
-                    @dragover.prevent="handleDragOver($event, child)"
-                    @dragleave="handleDragLeave($event, child)"
-                    @drop="handleDrop($event, child)"
+                      :draggable="child.type === 'connection'"
+                      @click.stop="child.type === 'group' ? toggleGroup(child.id) : selectConnection(child)"
+                      @contextmenu.prevent.stop="child.type === 'group' ? showGroupContextMenu($event, child) : showConnectionContextMenu($event, child)"
+                      @dragstart="handleDragStart($event, child)"
+                      @dragover.prevent="handleDragOver($event, child)"
+                      @dragleave="handleDragLeave($event, child)"
+                      @drop="handleDrop($event, child)"
                   >
                     <!-- 子分组 -->
                     <template v-if="child.type === 'group'">
                       <div class="group-header">
-                        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2">
                           <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                         <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -181,29 +183,31 @@
                       </div>
                       <div v-if="expandedGroups.includes(child.id)" class="group-children">
                         <div
-                          v-for="grandchild in child.children"
-                          :key="grandchild.id"
-                          :class="[
+                            v-for="grandchild in child.children"
+                            :key="grandchild.id"
+                            :class="[
                             grandchild.type === 'group' ? 'group-item nested' : 'connection-item nested',
-                            { 
+                            {
                               active: grandchild.type === 'connection' && selectedConnection?.id === grandchild.id,
                               'group-expanded': grandchild.type === 'group' && expandedGroups.includes(grandchild.id),
                               'drag-over': dragOverItemId === grandchild.id
                             }]"
-                          :draggable="grandchild.type === 'connection'"
-                          @click.stop="grandchild.type === 'group' ? toggleGroup(grandchild.id) : selectConnection(grandchild)"
-                          @contextmenu.prevent.stop="grandchild.type === 'group' ? showGroupContextMenu($event, grandchild) : showConnectionContextMenu($event, grandchild)"
-                          @dragstart="handleDragStart($event, grandchild)"
-                          @dragover.prevent="handleDragOver($event, grandchild)"
-                          @dragleave="handleDragLeave($event, grandchild)"
-                          @drop="handleDrop($event, grandchild)"
+                            :draggable="grandchild.type === 'connection'"
+                            @click.stop="grandchild.type === 'group' ? toggleGroup(grandchild.id) : selectConnection(grandchild)"
+                            @contextmenu.prevent.stop="grandchild.type === 'group' ? showGroupContextMenu($event, grandchild) : showConnectionContextMenu($event, grandchild)"
+                            @dragstart="handleDragStart($event, grandchild)"
+                            @dragover.prevent="handleDragOver($event, grandchild)"
+                            @dragleave="handleDragLeave($event, grandchild)"
+                            @drop="handleDrop($event, grandchild)"
                         >
                           <template v-if="grandchild.type === 'group'">
                             <div class="group-header">
-                              <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <svg class="group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                   stroke-width="2">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                               </svg>
-                              <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                   stroke-width="2">
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                               </svg>
                               <span class="group-name">{{ grandchild.name }}</span>
@@ -211,17 +215,17 @@
                             <div v-if="expandedGroups.includes(grandchild.id)" class="group-children">
                               <!-- 这里可以继续递归，但为了简化，我们只支持3层 -->
                               <div
-                                v-for="greatGrandchild in grandchild.children"
-                                :key="greatGrandchild.id"
-                                class="connection-item nested"
-                                :class="{ active: selectedConnection?.id === greatGrandchild.id }"
-                                :draggable="true"
-                                @click.stop="selectConnection(greatGrandchild)"
-                                @contextmenu.prevent.stop="showConnectionContextMenu($event, greatGrandchild)"
-                                @dragstart="handleDragStart($event, greatGrandchild)"
-                                @dragover.prevent="handleDragOver($event, greatGrandchild)"
-                                @dragleave="handleDragLeave($event, greatGrandchild)"
-                                @drop="handleDrop($event, greatGrandchild)"
+                                  v-for="greatGrandchild in grandchild.children"
+                                  :key="greatGrandchild.id"
+                                  class="connection-item nested"
+                                  :class="{ active: selectedConnection?.id === greatGrandchild.id }"
+                                  :draggable="true"
+                                  @click.stop="selectConnection(greatGrandchild)"
+                                  @contextmenu.prevent.stop="showConnectionContextMenu($event, greatGrandchild)"
+                                  @dragstart="handleDragStart($event, greatGrandchild)"
+                                  @dragover.prevent="handleDragOver($event, greatGrandchild)"
+                                  @dragleave="handleDragLeave($event, greatGrandchild)"
+                                  @drop="handleDrop($event, greatGrandchild)"
                               >
                                 <div class="connection-icon">
                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -232,7 +236,9 @@
                                 <div class="connection-info">
                                   <div class="connection-name">{{ greatGrandchild.name }}</div>
                                   <div class="connection-details">
-                                    <span class="connection-host">{{ greatGrandchild.host }}:{{ greatGrandchild.port }}</span>
+                                    <span class="connection-host">{{ greatGrandchild.host }}:{{
+                                        greatGrandchild.port
+                                      }}</span>
                                   </div>
                                   <div class="connection-status" :class="greatGrandchild.status">
                                     <span class="status-dot"></span>
@@ -285,7 +291,7 @@
                   </div>
                 </div>
               </template>
-              
+
               <!-- 连接项（根级别） -->
               <template v-else>
                 <div class="connection-icon">
@@ -305,20 +311,20 @@
                   </div>
                 </div>
                 <div class="connection-actions" @click.stop>
-                  <button 
-                    class="action-btn edit-btn" 
-                    @click="editConnection(item)"
-                    title="编辑"
+                  <button
+                      class="action-btn edit-btn"
+                      @click="editConnection(item)"
+                      title="编辑"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                   </button>
-                  <button 
-                    class="action-btn delete-btn" 
-                    @click="confirmDeleteConnection(item)"
-                    title="删除"
+                  <button
+                      class="action-btn delete-btn"
+                      @click="confirmDeleteConnection(item)"
+                      title="删除"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"/>
@@ -328,7 +334,7 @@
                 </div>
               </template>
             </div>
-            
+
             <div v-if="treeItems.length === 0" class="empty-connections">
               <p>暂无连接</p>
               <p class="empty-hint">右键点击添加新连接或分组</p>
@@ -372,37 +378,37 @@
               <div class="detail-actions">
                 <button class="btn btn-connect" @click="connectToRedis(selectedConnection)">
                   {{ selectedConnection.status === 'connected' ? '断开连接' : '连接' }}
-          </button>
+                </button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- 连接配置对话框 -->
         <ConnectionDialog
-          v-model:visible="dialogVisible"
-          :connection="editingConnection"
-          @submit="handleConnectionSubmit"
-          @cancel="handleDialogCancel"
+            v-model:visible="dialogVisible"
+            :connection="editingConnection"
+            @submit="handleConnectionSubmit"
+            @cancel="handleDialogCancel"
         />
-        
+
         <!-- 分组配置对话框 -->
         <GroupDialog
-          v-model:visible="groupDialogVisible"
-          :group="editingGroup"
-          :exclude-group-id="editingGroup?.id"
-          :fixed-parent-id="editingGroup?.parentId && !editingGroup?.id ? editingGroup.parentId : null"
-          @submit="handleGroupSubmit"
-          @cancel="handleGroupCancel"
+            v-model:visible="groupDialogVisible"
+            :group="editingGroup"
+            :exclude-group-id="editingGroup?.id"
+            :fixed-parent-id="editingGroup?.parentId && !editingGroup?.id ? editingGroup.parentId : null"
+            @submit="handleGroupSubmit"
+            @cancel="handleGroupCancel"
         />
-        
+
         <!-- 右键菜单 -->
         <ContextMenu
-          :visible="contextMenuVisible"
-          :position="contextMenuPosition"
-          :menu-items="contextMenuItems"
-          @close="contextMenuVisible = false"
-          @select="handleContextMenuSelect"
+            :visible="contextMenuVisible"
+            :position="contextMenuPosition"
+            :menu-items="contextMenuItems"
+            @close="contextMenuVisible = false"
+            @select="handleContextMenuSelect"
         />
       </div>
     </div>
@@ -410,14 +416,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import ConnectionDialog from './components/ConnectionDialog.vue'
 import GroupDialog from './components/GroupDialog.vue'
 import ContextMenu from './components/ContextMenu.vue'
-import { 
-  getConnections, 
-  addConnection, 
-  updateConnection, 
+import {
+  getConnections,
+  addConnection,
+  updateConnection,
   deleteConnection,
   getGroups,
   addGroup,
@@ -447,7 +453,7 @@ const editingGroup = ref(null)
 
 // 右键菜单状态
 const contextMenuVisible = ref(false)
-const contextMenuPosition = ref({ x: 0, y: 0 })
+const contextMenuPosition = ref({x: 0, y: 0})
 const contextMenuItems = ref([])
 const contextMenuTarget = ref(null) // 当前右键菜单的目标（连接、分组或列表）
 
@@ -496,9 +502,9 @@ const loadConnections = () => {
 function buildGroupTree(parentId = null) {
   const groupChildren = groups.value.filter(g => g.parentId === parentId)
   const connectionChildren = connections.value.filter(c => c.groupId === parentId)
-  
+
   const items = []
-  
+
   // 添加子分组（递归）
   groupChildren.forEach(group => {
     const subItems = buildGroupTree(group.id)
@@ -510,7 +516,7 @@ function buildGroupTree(parentId = null) {
       children: subItems
     })
   })
-  
+
   // 添加连接
   connectionChildren.forEach(conn => {
     items.push({
@@ -518,7 +524,7 @@ function buildGroupTree(parentId = null) {
       ...conn
     })
   })
-  
+
   return items
 }
 
@@ -532,21 +538,21 @@ const filteredTreeItems = computed(() => {
   if (!searchQuery.value.trim()) {
     return treeItems.value
   }
-  
+
   const query = searchQuery.value.toLowerCase().trim()
   const filtered = []
-  
+
   treeItems.value.forEach(item => {
     if (item.type === 'group') {
       // 检查分组名称是否匹配
       const groupMatches = item.name.toLowerCase().includes(query)
       // 检查分组内的连接是否匹配
-      const matchingChildren = item.children.filter(child => 
-        child.name.toLowerCase().includes(query) ||
-        child.host.toLowerCase().includes(query) ||
-        String(child.port).includes(query)
+      const matchingChildren = item.children.filter(child =>
+          child.name.toLowerCase().includes(query) ||
+          child.host.toLowerCase().includes(query) ||
+          String(child.port).includes(query)
       )
-      
+
       // 如果分组名称匹配或有匹配的子连接，则显示该分组
       if (groupMatches || matchingChildren.length > 0) {
         // 如果有匹配项，自动展开该分组
@@ -561,15 +567,15 @@ const filteredTreeItems = computed(() => {
     } else {
       // 检查连接是否匹配
       if (
-        item.name.toLowerCase().includes(query) ||
-        item.host.toLowerCase().includes(query) ||
-        String(item.port).includes(query)
+          item.name.toLowerCase().includes(query) ||
+          item.host.toLowerCase().includes(query) ||
+          String(item.port).includes(query)
       ) {
         filtered.push(item)
       }
     }
   })
-  
+
   return filtered
 })
 
@@ -637,12 +643,12 @@ const confirmDeleteConnection = (connection) => {
 const showListContextMenu = (event) => {
   event.preventDefault()
   event.stopPropagation()
-  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contextMenuPosition.value = {x: event.clientX, y: event.clientY}
   contextMenuItems.value = [
-    { id: 'new-connection', label: '新建连接', icon: 'add' },
-    { id: 'new-group', label: '新建分组', icon: 'folder' }
+    {id: 'new-connection', label: '新建连接', icon: 'add'},
+    {id: 'new-group', label: '新建分组', icon: 'folder'}
   ]
-  contextMenuTarget.value = { type: 'list' }
+  contextMenuTarget.value = {type: 'list'}
   contextMenuVisible.value = true
 }
 
@@ -650,12 +656,12 @@ const showListContextMenu = (event) => {
 const showConnectionContextMenu = (event, connection) => {
   event.preventDefault()
   event.stopPropagation()
-  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+  contextMenuPosition.value = {x: event.clientX, y: event.clientY}
   contextMenuItems.value = [
-    { id: 'edit-connection', label: '编辑连接', icon: 'edit' },
-    { id: 'delete-connection', label: '删除连接', icon: 'delete' }
+    {id: 'edit-connection', label: '编辑连接', icon: 'edit'},
+    {id: 'delete-connection', label: '删除连接', icon: 'delete'}
   ]
-  contextMenuTarget.value = { type: 'connection', data: connection }
+  contextMenuTarget.value = {type: 'connection', data: connection}
   contextMenuVisible.value = true
 }
 
@@ -672,23 +678,23 @@ function getGroupDepth(groupId) {
 const showGroupContextMenu = (event, group) => {
   event.preventDefault()
   event.stopPropagation()
-  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
-  
+  contextMenuPosition.value = {x: event.clientX, y: event.clientY}
+
   // 计算当前分组的层数
   const currentDepth = getGroupDepth(group.id)
-  
+
   // 构建菜单项：如果层数已达到3层，不显示"新建子分组"
   const menuItems = [
-    { id: 'edit-group', label: '编辑分组', icon: 'edit' }
+    {id: 'edit-group', label: '编辑分组', icon: 'edit'}
   ]
-  
+
   // 只有层数小于3时才显示"新建子分组"
   if (currentDepth < 3) {
-    menuItems.push({ id: 'new-subgroup', label: '新建子分组', icon: 'folder' })
+    menuItems.push({id: 'new-subgroup', label: '新建子分组', icon: 'folder'})
   }
-  
+
   contextMenuItems.value = menuItems
-  contextMenuTarget.value = { type: 'group', data: group }
+  contextMenuTarget.value = {type: 'group', data: group}
   contextMenuVisible.value = true
 }
 
@@ -696,7 +702,7 @@ const showGroupContextMenu = (event, group) => {
 const handleContextMenuSelect = (item) => {
   const target = contextMenuTarget.value
   if (!target) return
-  
+
   switch (item.id) {
     case 'new-connection':
       showAddDialog()
@@ -727,7 +733,7 @@ const showAddGroupDialog = () => {
 
 // 显示添加子分组对话框
 const showAddSubGroupDialog = (parentGroup) => {
-  editingGroup.value = { parentId: parentGroup.id }
+  editingGroup.value = {parentId: parentGroup.id}
   groupDialogVisible.value = true
 }
 
@@ -763,12 +769,12 @@ const connectToRedis = (connection) => {
   console.log('连接到 Redis:', connection)
   // TODO: 实现实际的 Redis 连接逻辑
   if (connection.status === 'connected') {
-    updateConnection(connection.id, { status: 'disconnected' })
+    updateConnection(connection.id, {status: 'disconnected'})
   } else {
-    updateConnection(connection.id, { status: 'connecting' })
+    updateConnection(connection.id, {status: 'connecting'})
     // 模拟连接过程
     setTimeout(() => {
-      updateConnection(connection.id, { status: 'connected' })
+      updateConnection(connection.id, {status: 'connected'})
       loadConnections()
     }, 1000)
   }
@@ -797,10 +803,10 @@ const handleDragLeave = (event, item) => {
 const handleDrop = (event, item) => {
   event.preventDefault()
   dragOverItemId.value = null
-  
+
   if (item.type === 'group' && draggedItem.value) {
     // 将连接移动到分组
-    updateConnection(draggedItem.value.id, { groupId: item.id })
+    updateConnection(draggedItem.value.id, {groupId: item.id})
     loadConnections()
     draggedItem.value = null
   }

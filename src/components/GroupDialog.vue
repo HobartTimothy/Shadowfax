@@ -15,39 +15,39 @@
           <div class="form-group">
             <label for="name">分组名称 *</label>
             <input
-              id="name"
-              v-model="formData.name"
-              type="text"
-              placeholder="例如：生产环境"
-              required
-              class="form-input"
+                id="name"
+                v-model="formData.name"
+                type="text"
+                placeholder="例如：生产环境"
+                required
+                class="form-input"
             />
           </div>
 
           <div v-if="showParentSelect" class="form-group">
             <label for="parentId">父分组</label>
             <select
-              v-if="!fixedParentId"
-              id="parentId"
-              v-model="formData.parentId"
-              class="form-input"
+                v-if="!fixedParentId"
+                id="parentId"
+                v-model="formData.parentId"
+                class="form-input"
             >
               <option :value="null">无（根分组）</option>
               <option
-                v-for="group in availableParents"
-                :key="group.id"
-                :value="group.id"
+                  v-for="group in availableParents"
+                  :key="group.id"
+                  :value="group.id"
               >
                 {{ group.name }}
               </option>
             </select>
             <input
-              v-else
-              id="parentId"
-              :value="parentGroupName"
-              class="form-input form-input-disabled"
-              readonly
-              disabled
+                v-else
+                id="parentId"
+                :value="parentGroupName"
+                class="form-input form-input-disabled"
+                readonly
+                disabled
             />
           </div>
 
@@ -66,8 +66,8 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
-import { getGroups } from '../utils/storage.js'
+import {ref, watch, computed} from 'vue'
+import {getGroups} from '../utils/storage.js'
 
 const props = defineProps({
   visible: {
@@ -183,8 +183,8 @@ function handleSubmit() {
       return
     }
   }
-  
-  emit('submit', { ...formData.value })
+
+  emit('submit', {...formData.value})
   emit('update:visible', false)
 }
 

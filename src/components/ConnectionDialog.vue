@@ -15,73 +15,73 @@
           <div class="form-group">
             <label for="name">连接名称 *</label>
             <input
-              id="name"
-              v-model="formData.name"
-              type="text"
-              placeholder="例如：生产服务器"
-              required
-              class="form-input"
+                id="name"
+                v-model="formData.name"
+                type="text"
+                placeholder="例如：生产服务器"
+                required
+                class="form-input"
             />
           </div>
 
           <div class="form-group">
             <label for="host">主机地址 *</label>
             <input
-              id="host"
-              v-model="formData.host"
-              type="text"
-              placeholder="127.0.0.1"
-              required
-              class="form-input"
+                id="host"
+                v-model="formData.host"
+                type="text"
+                placeholder="127.0.0.1"
+                required
+                class="form-input"
             />
           </div>
 
           <div class="form-group">
             <label for="port">端口 *</label>
             <input
-              id="port"
-              v-model.number="formData.port"
-              type="number"
-              placeholder="6379"
-              required
-              min="1"
-              max="65535"
-              class="form-input"
+                id="port"
+                v-model.number="formData.port"
+                type="number"
+                placeholder="6379"
+                required
+                min="1"
+                max="65535"
+                class="form-input"
             />
           </div>
 
           <div class="form-group">
             <label for="password">密码</label>
             <input
-              id="password"
-              v-model="formData.password"
-              type="password"
-              placeholder="留空表示无密码"
-              class="form-input"
+                id="password"
+                v-model="formData.password"
+                type="password"
+                placeholder="留空表示无密码"
+                class="form-input"
             />
           </div>
 
           <div class="form-group">
             <label for="username">用户名</label>
             <input
-              id="username"
-              v-model="formData.username"
-              type="text"
-              placeholder="Redis 6.0+ ACL 用户名（可选）"
-              class="form-input"
+                id="username"
+                v-model="formData.username"
+                type="text"
+                placeholder="Redis 6.0+ ACL 用户名（可选）"
+                class="form-input"
             />
           </div>
 
           <div class="form-group">
             <label for="database">数据库索引</label>
             <input
-              id="database"
-              v-model.number="formData.database"
-              type="number"
-              placeholder="0"
-              min="0"
-              max="15"
-              class="form-input"
+                id="database"
+                v-model.number="formData.database"
+                type="number"
+                placeholder="0"
+                min="0"
+                max="15"
+                class="form-input"
             />
           </div>
 
@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import {ref, watch} from 'vue'
 
 const props = defineProps({
   visible: {
@@ -141,7 +141,7 @@ watch(() => props.connection, (newConnection) => {
     isEdit.value = false
     resetForm()
   }
-}, { immediate: true })
+}, {immediate: true})
 
 // 监听 visible 变化，重置表单
 watch(() => props.visible, (newVisible) => {
@@ -163,7 +163,7 @@ function resetForm() {
 }
 
 function handleSubmit() {
-  emit('submit', { ...formData.value })
+  emit('submit', {...formData.value})
   emit('update:visible', false)
 }
 
