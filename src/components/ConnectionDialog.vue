@@ -28,609 +28,63 @@
           <!-- 右侧内容区域 -->
           <div class="content-area">
             <!-- 常规配置 -->
-            <div v-if="activeTab === 'general'" class="tab-content">
-              <div class="form-group">
-                <label>连接名</label>
-                <input
-                    v-model="formData.name"
-                    type="text"
-                    placeholder="连接名"
-                    class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>分组</label>
-                <select v-model="formData.groupId" class="form-input">
-                  <option :value="null">无分组</option>
-                  <option v-for="group in groups" :key="group.id" :value="group.id">
-                    {{ group.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>连接地址</label>
-                <div class="address-input-group">
-                  <select v-model="formData.protocol" class="protocol-select">
-                    <option value="tcp">TCP</option>
-                    <option value="tls">TLS</option>
-                  </select>
-                  <input
-                      v-model="formData.host"
-                      type="text"
-                      placeholder="127.0.0.1"
-                      class="form-input address-input"
-                  />
-                  <span class="address-separator">:</span>
-                  <input
-                      v-model.number="formData.port"
-                      type="number"
-                      placeholder="6379"
-                      class="form-input port-input"
-                  />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>密码</label>
-                <div class="password-input-group">
-                  <input
-                      v-model="formData.password"
-                      :type="showPassword ? 'text' : 'password'"
-                      placeholder="(可选)Redis服务授权密码"
-                      class="form-input"
-                  />
-                  <button
-                      type="button"
-                      class="password-toggle"
-                      @click="showPassword = !showPassword"
-                  >
-                    <svg v-if="showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>用户名</label>
-                <input
-                    v-model="formData.username"
-                    type="text"
-                    placeholder="(可选)Redis服务授权用户名"
-                    class="form-input"
-                />
-              </div>
-            </div>
+            <GeneralConfig
+                v-if="activeTab === 'general'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+            />
 
             <!-- 高级配置 -->
-            <div v-if="activeTab === 'advanced'" class="tab-content">
-              <div class="form-group">
-                <label>默认键过滤表达式</label>
-                <input
-                    v-model="formData.keyFilter"
-                    type="text"
-                    placeholder="*"
-                    class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>键分隔符</label>
-                <input
-                    v-model="formData.keySeparator"
-                    type="text"
-                    placeholder=":"
-                    class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>连接超时</label>
-                <div class="timeout-input-group">
-                  <input
-                      v-model.number="formData.connectTimeout"
-                      type="number"
-                      placeholder="60"
-                      class="form-input"
-                  />
-                  <span class="timeout-unit">秒</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>执行超时</label>
-                <div class="timeout-input-group">
-                  <input
-                      v-model.number="formData.executeTimeout"
-                      type="number"
-                      placeholder="60"
-                      class="form-input"
-                  />
-                  <span class="timeout-unit">秒</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>默认键视图</label>
-                <div class="toggle-group">
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.keyView === 'tree' }"
-                      @click="formData.keyView = 'tree'"
-                  >
-                    树形列表
-                  </button>
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.keyView === 'flat' }"
-                      @click="formData.keyView = 'flat'"
-                  >
-                    平铺列表
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>单次加载键数量</label>
-                <input
-                    v-model.number="formData.keysPerLoad"
-                    type="number"
-                    placeholder="10000"
-                    class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>数据库过滤方式</label>
-                <div class="toggle-group">
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.dbFilter === 'all' }"
-                      @click="formData.dbFilter = 'all'"
-                  >
-                    显示所有
-                  </button>
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.dbFilter === 'include' }"
-                      @click="formData.dbFilter = 'include'"
-                  >
-                    显示指定
-                  </button>
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.dbFilter === 'exclude' }"
-                      @click="formData.dbFilter = 'exclude'"
-                  >
-                    隐藏指定
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>标记颜色</label>
-                <div class="color-picker">
-                  <button
-                      v-for="color in colors"
-                      :key="color.value"
-                      type="button"
-                      class="color-btn"
-                      :class="{ active: formData.tagColor === color.value }"
-                      :style="{ backgroundColor: color.bg }"
-                      @click="formData.tagColor = color.value"
-                  >
-                    <svg v-if="color.value === 'none'" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="2" y1="2" x2="10" y2="10"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <AdvancedConfig
+                v-if="activeTab === 'advanced'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+            />
 
             <!-- 数据库别名 -->
-            <div v-if="activeTab === 'alias'" class="tab-content">
-              <div class="form-group">
-                <div class="alias-input-group">
-                  <input
-                      v-model="newAlias"
-                      type="text"
-                      placeholder="数据库别名"
-                      class="form-input"
-                      @keyup.enter="addAlias"
-                  />
-                  <button type="button" class="btn-add" @click="addAlias">+ 添加</button>
-                </div>
-                <div v-if="formData.aliases && formData.aliases.length > 0" class="alias-list">
-                  <div v-for="(alias, index) in formData.aliases" :key="index" class="alias-item">
-                    <span>{{ alias }}</span>
-                    <button type="button" class="alias-remove" @click="removeAlias(index)">×</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DatabaseAlias
+                v-if="activeTab === 'alias'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+            />
 
             <!-- SSL/TLS -->
-            <div v-if="activeTab === 'ssl'" class="tab-content">
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input
-                      v-model="formData.ssl.enabled"
-                      type="checkbox"
-                      class="checkbox-input"
-                  />
-                  <span>启用SSL</span>
-                </label>
-              </div>
-
-              <div class="form-group">
-                <label>公钥文件</label>
-                <div class="file-input-group">
-                  <input
-                      v-model="formData.ssl.certFile"
-                      type="text"
-                      placeholder="PEM格式公钥文件(Cert)"
-                      class="form-input"
-                  />
-                  <button type="button" class="btn-browse" @click="browseFile('cert')">...</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>私钥文件</label>
-                <div class="file-input-group">
-                  <input
-                      v-model="formData.ssl.keyFile"
-                      type="text"
-                      placeholder="PEM格式私钥文件(Key)"
-                      class="form-input"
-                  />
-                  <button type="button" class="btn-browse" @click="browseFile('key')">...</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>授权文件</label>
-                <div class="file-input-group">
-                  <input
-                      v-model="formData.ssl.caFile"
-                      type="text"
-                      placeholder="PEM格式授权文件(CA)"
-                      class="form-input"
-                  />
-                  <button type="button" class="btn-browse" @click="browseFile('ca')">...</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input
-                      v-model="formData.ssl.rejectUnauthorized"
-                      type="checkbox"
-                      class="checkbox-input"
-                  />
-                  <span>允许不安全连接</span>
-                </label>
-              </div>
-
-              <div class="form-group">
-                <label>服务器名(SNI)</label>
-                <input
-                    v-model="formData.ssl.servername"
-                    type="text"
-                    placeholder="服务器名(SNI)"
-                    class="form-input"
-                />
-              </div>
-            </div>
+            <SslConfig
+                v-if="activeTab === 'ssl'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+                @browse="handleBrowse"
+            />
 
             <!-- SSH隧道 -->
-            <div v-if="activeTab === 'ssh'" class="tab-content">
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input
-                      v-model="formData.ssh.enabled"
-                      type="checkbox"
-                      class="checkbox-input"
-                  />
-                  <span>启用SSH隧道</span>
-                </label>
-              </div>
-
-              <div class="form-group">
-                <label>连接地址</label>
-                <div class="address-input-group">
-                  <input
-                      v-model="formData.ssh.host"
-                      type="text"
-                      placeholder="SSH地址"
-                      class="form-input address-input"
-                  />
-                  <span class="address-separator">:</span>
-                  <input
-                      v-model.number="formData.ssh.port"
-                      type="number"
-                      placeholder="22"
-                      class="form-input port-input"
-                  />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>登录类型</label>
-                <div class="toggle-group">
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.ssh.authType === 'password' }"
-                      @click="formData.ssh.authType = 'password'"
-                  >
-                    密码
-                  </button>
-                  <button
-                      type="button"
-                      class="toggle-btn"
-                      :class="{ active: formData.ssh.authType === 'key' }"
-                      @click="formData.ssh.authType = 'key'"
-                  >
-                    私钥文件
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>用户名</label>
-                <input
-                    v-model="formData.ssh.username"
-                    type="text"
-                    placeholder="SSH登录用户名"
-                    class="form-input"
-                />
-              </div>
-
-              <div v-if="formData.ssh.authType === 'password'" class="form-group">
-                <label>密码</label>
-                <div class="password-input-group">
-                  <input
-                      v-model="formData.ssh.password"
-                      :type="showSshPassword ? 'text' : 'password'"
-                      placeholder="SSH登录密码"
-                      class="form-input"
-                  />
-                  <button
-                      type="button"
-                      class="password-toggle"
-                      @click="showSshPassword = !showSshPassword"
-                  >
-                    <svg v-if="showSshPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="formData.ssh.authType === 'key'" class="form-group">
-                <label>私钥文件</label>
-                <div class="file-input-group">
-                  <input
-                      v-model="formData.ssh.privateKeyFile"
-                      type="text"
-                      placeholder="SSH私钥文件路径"
-                      class="form-input"
-                  />
-                  <button type="button" class="btn-browse" @click="browseFile('sshKey')">...</button>
-                </div>
-              </div>
-            </div>
+            <SshConfig
+                v-if="activeTab === 'ssh'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+                @browse="handleBrowse"
+            />
 
             <!-- 哨兵模式 -->
-            <div v-if="activeTab === 'sentinel'" class="tab-content">
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input
-                      v-model="formData.sentinel.enabled"
-                      type="checkbox"
-                      class="checkbox-input"
-                  />
-                  <span>当前为哨兵节点</span>
-                </label>
-              </div>
-
-              <div class="form-group">
-                <label>主节点组名</label>
-                <div class="master-group-input">
-                  <input
-                      v-model="formData.sentinel.masterGroup"
-                      type="text"
-                      placeholder="mymaster"
-                      class="form-input"
-                  />
-                  <button type="button" class="btn-auto-query">自动查询组名</button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>主节点密码</label>
-                <div class="password-input-group">
-                  <input
-                      v-model="formData.sentinel.masterPassword"
-                      :type="showSentinelPassword ? 'text' : 'password'"
-                      placeholder="(可选)主节点服务授权密码 (Redis > 6.0)"
-                      class="form-input"
-                  />
-                  <button
-                      type="button"
-                      class="password-toggle"
-                      @click="showSentinelPassword = !showSentinelPassword"
-                  >
-                    <svg v-if="showSentinelPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>主节点用户名</label>
-                <input
-                    v-model="formData.sentinel.masterUsername"
-                    type="text"
-                    placeholder="(可选)主节点服务授权用户名"
-                    class="form-input"
-                />
-              </div>
-            </div>
+            <SentinelConfig
+                v-if="activeTab === 'sentinel'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+                @auto-query="handleAutoQuery"
+            />
 
             <!-- 集群模式 -->
-            <div v-if="activeTab === 'cluster'" class="tab-content">
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input
-                      v-model="formData.cluster.enabled"
-                      type="checkbox"
-                      class="checkbox-input"
-                  />
-                  <span>当前为集群节点</span>
-                </label>
-              </div>
-            </div>
+            <ClusterConfig
+                v-if="activeTab === 'cluster'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+            />
 
             <!-- 网络代理 -->
-            <div v-if="activeTab === 'proxy'" class="tab-content">
-              <div class="form-group">
-                <label>代理配置</label>
-                <div class="radio-group">
-                  <label class="radio-label">
-                    <input
-                        v-model="formData.proxy.type"
-                        type="radio"
-                        value="none"
-                        class="radio-input"
-                    />
-                    <span>不使用代理</span>
-                  </label>
-                  <label class="radio-label">
-                    <input
-                        v-model="formData.proxy.type"
-                        type="radio"
-                        value="system"
-                        class="radio-input"
-                    />
-                    <span>使用系统代理设置</span>
-                  </label>
-                  <label class="radio-label">
-                    <input
-                        v-model="formData.proxy.type"
-                        type="radio"
-                        value="manual"
-                        class="radio-input"
-                    />
-                    <span>手动配置代理</span>
-                  </label>
-                </div>
-              </div>
-
-              <template v-if="formData.proxy.type === 'manual'">
-                <div class="form-group">
-                  <label>代理类型</label>
-                  <select v-model="formData.proxy.protocol" class="form-input">
-                    <option value="http">HTTP</option>
-                    <option value="https">HTTPS</option>
-                    <option value="socks4">SOCKS4</option>
-                    <option value="socks5">SOCKS5</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>主机名</label>
-                  <div class="address-input-group">
-                    <input
-                        v-model="formData.proxy.host"
-                        type="text"
-                        placeholder="代理主机名"
-                        class="form-input address-input"
-                    />
-                    <span class="address-separator">:</span>
-                    <input
-                        v-model.number="formData.proxy.port"
-                        type="number"
-                        placeholder="0"
-                        class="form-input port-input"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input
-                        v-model="formData.proxy.authEnabled"
-                        type="checkbox"
-                        class="checkbox-input"
-                    />
-                    <span>使用身份验证</span>
-                  </label>
-                </div>
-
-                <template v-if="formData.proxy.authEnabled">
-                  <div class="form-group">
-                    <label>用户名</label>
-                    <input
-                        v-model="formData.proxy.username"
-                        type="text"
-                        placeholder="代理授权用户名"
-                        class="form-input"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label>密码</label>
-                    <div class="password-input-group">
-                      <input
-                          v-model="formData.proxy.password"
-                          :type="showProxyPassword ? 'text' : 'password'"
-                          placeholder="代理授权密码"
-                          class="form-input"
-                      />
-                      <button
-                          type="button"
-                          class="password-toggle"
-                          @click="showProxyPassword = !showProxyPassword"
-                      >
-                        <svg v-if="showProxyPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                          <line x1="1" y1="1" x2="23" y2="23"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </template>
-              </template>
-            </div>
+            <ProxyConfig
+                v-if="activeTab === 'proxy'"
+                :model-value="formData"
+                @update:model-value="formData = $event"
+            />
           </div>
         </div>
 
@@ -655,8 +109,17 @@
 </template>
 
 <script setup>
-import {ref, watch, computed} from 'vue'
-import {getGroups} from '../utils/storage.js'
+import {ref, watch} from 'vue'
+import {
+  GeneralConfig,
+  AdvancedConfig,
+  DatabaseAlias,
+  SslConfig,
+  SshConfig,
+  SentinelConfig,
+  ClusterConfig,
+  ProxyConfig
+} from './connection'
 
 const props = defineProps({
   visible: {
@@ -672,11 +135,6 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'submit', 'cancel'])
 
 const activeTab = ref('general')
-const showPassword = ref(false)
-const showSshPassword = ref(false)
-const showSentinelPassword = ref(false)
-const showProxyPassword = ref(false)
-const newAlias = ref('')
 const isEdit = ref(false)
 
 const tabs = [
@@ -690,19 +148,7 @@ const tabs = [
   {id: 'proxy', label: '网络代理'}
 ]
 
-const colors = [
-  {value: 'none', bg: '#000000'},
-  {value: 'red', bg: '#f44336'},
-  {value: 'orange', bg: '#ff9800'},
-  {value: 'yellow', bg: '#ffeb3b'},
-  {value: 'green', bg: '#4caf50'},
-  {value: 'blue', bg: '#2196f3'},
-  {value: 'purple', bg: '#9c27b0'}
-]
-
-const groups = computed(() => getGroups())
-
-const formData = ref({
+const defaultFormData = () => ({
   name: '',
   groupId: null,
   protocol: 'tcp',
@@ -756,11 +202,13 @@ const formData = ref({
   }
 })
 
+const formData = ref(defaultFormData())
+
 // 监听 connection 变化，填充表单
 watch(() => props.connection, (newConnection) => {
   if (newConnection) {
     isEdit.value = true
-    Object.assign(formData.value, {
+    formData.value = {
       name: newConnection.name || '',
       groupId: newConnection.groupId || null,
       protocol: newConnection.protocol || 'tcp',
@@ -812,7 +260,7 @@ watch(() => props.connection, (newConnection) => {
         username: '',
         password: ''
       }
-    })
+    }
   } else {
     isEdit.value = false
     resetForm()
@@ -830,79 +278,17 @@ watch(() => props.visible, (newVisible) => {
 })
 
 function resetForm() {
-  formData.value = {
-    name: '',
-    groupId: null,
-    protocol: 'tcp',
-    host: '127.0.0.1',
-    port: 6379,
-    password: '',
-    username: '',
-    keyFilter: '*',
-    keySeparator: ':',
-    connectTimeout: 60,
-    executeTimeout: 60,
-    keyView: 'tree',
-    keysPerLoad: 10000,
-    dbFilter: 'all',
-    tagColor: 'none',
-    aliases: [],
-    ssl: {
-      enabled: false,
-      certFile: '',
-      keyFile: '',
-      caFile: '',
-      rejectUnauthorized: false,
-      servername: ''
-    },
-    ssh: {
-      enabled: false,
-      host: '',
-      port: 22,
-      authType: 'password',
-      username: '',
-      password: '',
-      privateKeyFile: ''
-    },
-    sentinel: {
-      enabled: false,
-      masterGroup: 'mymaster',
-      masterPassword: '',
-      masterUsername: ''
-    },
-    cluster: {
-      enabled: false
-    },
-    proxy: {
-      type: 'none',
-      protocol: 'http',
-      host: '',
-      port: 0,
-      authEnabled: false,
-      username: '',
-      password: ''
-    }
-  }
-  newAlias.value = ''
+  formData.value = defaultFormData()
 }
 
-function addAlias() {
-  if (newAlias.value.trim()) {
-    if (!formData.value.aliases) {
-      formData.value.aliases = []
-    }
-    formData.value.aliases.push(newAlias.value.trim())
-    newAlias.value = ''
-  }
-}
-
-function removeAlias(index) {
-  formData.value.aliases.splice(index, 1)
-}
-
-function browseFile(type) {
+function handleBrowse(type) {
   // TODO: 实现文件选择对话框
   console.log('浏览文件:', type)
+}
+
+function handleAutoQuery() {
+  // TODO: 实现自动查询组名功能
+  console.log('自动查询组名')
 }
 
 function testConnection() {
@@ -1053,322 +439,6 @@ function handleCancel() {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-}
-
-.tab-content {
-  max-width: 500px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.2s;
-  box-sizing: border-box;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #2196f3;
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-.form-input::placeholder {
-  color: #999;
-}
-
-.address-input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.protocol-select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
-  cursor: pointer;
-}
-
-.address-input {
-  flex: 1;
-}
-
-.address-separator {
-  color: #666;
-  font-size: 14px;
-}
-
-.port-input {
-  width: 100px;
-}
-
-.password-input-group {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-input-group .form-input {
-  padding-right: 40px;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.password-toggle:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.timeout-input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.timeout-input-group .form-input {
-  flex: 1;
-}
-
-.timeout-unit {
-  color: #666;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.toggle-group {
-  display: flex;
-  gap: 8px;
-}
-
-.toggle-btn {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #666;
-}
-
-.toggle-btn:hover {
-  border-color: #999;
-  background: #f5f5f5;
-}
-
-.toggle-btn.active {
-  background: #e53935;
-  border-color: #e53935;
-  color: white;
-}
-
-.color-picker {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.color-btn {
-  width: 32px;
-  height: 32px;
-  border: 2px solid #ddd;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  background: #000;
-}
-
-.color-btn:hover {
-  transform: scale(1.1);
-}
-
-.color-btn.active {
-  border-color: #e53935;
-  border-width: 3px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: normal;
-}
-
-.checkbox-input {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: normal;
-}
-
-.radio-input {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.file-input-group {
-  display: flex;
-  gap: 8px;
-}
-
-.file-input-group .form-input {
-  flex: 1;
-}
-
-.btn-browse {
-  padding: 10px 16px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #666;
-  white-space: nowrap;
-}
-
-.btn-browse:hover {
-  border-color: #999;
-  background: #f5f5f5;
-}
-
-.alias-input-group {
-  display: flex;
-  gap: 8px;
-}
-
-.alias-input-group .form-input {
-  flex: 1;
-}
-
-.btn-add {
-  padding: 10px 20px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #666;
-  white-space: nowrap;
-}
-
-.btn-add:hover {
-  border-color: #999;
-  background: #f5f5f5;
-}
-
-.alias-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.alias-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.alias-remove {
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  border-radius: 4px;
-  transition: all 0.2s;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.alias-remove:hover {
-  background: #e0e0e0;
-  color: #f44336;
-}
-
-.master-group-input {
-  display: flex;
-  gap: 8px;
-}
-
-.master-group-input .form-input {
-  flex: 1;
-}
-
-.btn-auto-query {
-  padding: 10px 16px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #666;
-  white-space: nowrap;
-}
-
-.btn-auto-query:hover {
-  border-color: #999;
-  background: #f5f5f5;
 }
 
 .dialog-footer {
