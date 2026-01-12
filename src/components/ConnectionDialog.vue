@@ -1,9 +1,9 @@
 <template>
-  <div v-if="visible" class="dialog-overlay" @click.self="handleCancel">
+  <div v-if="visible" class="dialog-overlay" @click.self="cancelForm">
     <div class="dialog-container">
       <div class="dialog-header">
         <h3 class="dialog-title">{{ isEdit ? '编辑连接' : '新建连接' }}</h3>
-        <button class="dialog-close" @click="handleCancel" title="关闭">
+        <button class="dialog-close" @click="cancelForm" title="关闭">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 4 L4 12 M4 4 L12 12"/>
           </svg>
@@ -13,93 +13,53 @@
       <div class="dialog-body">
         <div class="dialog-content-wrapper">
           <!-- 左侧导航菜单 -->
-          <div class="nav-sidebar">
-            <div
+          <nav class="nav-sidebar" role="tablist">
+            <button
                 v-for="tab in tabs"
                 :key="tab.id"
+                type="button"
                 class="nav-item"
                 :class="{ active: activeTab === tab.id }"
-                @click="activeTab = tab.id"
+                :aria-selected="activeTab === tab.id"
+                role="tab"
+                @click="switchTab(tab.id)"
             >
               {{ tab.label }}
-            </div>
-          </div>
+            </button>
+          </nav>
 
           <!-- 右侧内容区域 -->
-          <div class="content-area">
-            <!-- 常规配置 -->
-            <GeneralConfig
-                v-if="activeTab === 'general'"
+          <div class="content-area" role="tabpanel">
+            <component
+                :is="componentMap[currentTab.component]"
                 :model-value="formData"
-                @update:model-value="formData = $event"
-            />
-
-            <!-- 高级配置 -->
-            <AdvancedConfig
-                v-if="activeTab === 'advanced'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
-            />
-
-            <!-- 数据库别名 -->
-            <DatabaseAlias
-                v-if="activeTab === 'alias'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
-            />
-
-            <!-- SSL/TLS -->
-            <SslConfig
-                v-if="activeTab === 'ssl'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
+                @update:model-value="updateFormData"
                 @browse="handleBrowse"
-            />
-
-            <!-- SSH隧道 -->
-            <SshConfig
-                v-if="activeTab === 'ssh'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
-                @browse="handleBrowse"
-            />
-
-            <!-- 哨兵模式 -->
-            <SentinelConfig
-                v-if="activeTab === 'sentinel'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
                 @auto-query="handleAutoQuery"
-            />
-
-            <!-- 集群模式 -->
-            <ClusterConfig
-                v-if="activeTab === 'cluster'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
-            />
-
-            <!-- 网络代理 -->
-            <ProxyConfig
-                v-if="activeTab === 'proxy'"
-                :model-value="formData"
-                @update:model-value="formData = $event"
             />
           </div>
         </div>
 
         <!-- 底部操作按钮 -->
         <div class="dialog-footer">
-          <button type="button" class="btn btn-secondary" @click="testConnection">
+          <button
+              type="button"
+              class="btn btn-secondary"
+              @click="testConnection(formData)"
+          >
             测试连接
           </button>
-          <button type="button" class="btn btn-secondary" @click="parseClipboardUrl">
+          <button
+              type="button"
+              class="btn btn-secondary"
+              @click="parseClipboardUrl(updateFormData)"
+          >
             解析剪切板中的URL
           </button>
-          <button type="button" class="btn btn-cancel" @click="handleCancel">
+          <button type="button" class="btn btn-cancel" @click="cancelForm">
             取消
           </button>
-          <button type="button" class="btn btn-primary" @click="handleSubmit">
+          <button type="button" class="btn btn-primary" @click="submitForm">
             确认
           </button>
         </div>
@@ -109,7 +69,6 @@
 </template>
 
 <script setup>
-import {ref, watch} from 'vue'
 import {
   GeneralConfig,
   AdvancedConfig,
@@ -120,6 +79,8 @@ import {
   ClusterConfig,
   ProxyConfig
 } from './connection'
+import {useConnectionForm} from './connection/composables/useConnectionForm.js'
+import {useConnectionActions} from './connection/composables/useConnectionActions.js'
 
 const props = defineProps({
   visible: {
@@ -134,182 +95,37 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'submit', 'cancel'])
 
-const activeTab = ref('general')
-const isEdit = ref(false)
-
-const tabs = [
-  {id: 'general', label: '常规配置'},
-  {id: 'advanced', label: '高级配置'},
-  {id: 'alias', label: '数据库别名'},
-  {id: 'ssl', label: 'SSL/TLS'},
-  {id: 'ssh', label: 'SSH隧道'},
-  {id: 'sentinel', label: '哨兵模式'},
-  {id: 'cluster', label: '集群模式'},
-  {id: 'proxy', label: '网络代理'}
-]
-
-const defaultFormData = () => ({
-  name: '',
-  groupId: null,
-  protocol: 'tcp',
-  host: '127.0.0.1',
-  port: 6379,
-  password: '',
-  username: '',
-  keyFilter: '*',
-  keySeparator: ':',
-  connectTimeout: 60,
-  executeTimeout: 60,
-  keyView: 'tree',
-  keysPerLoad: 10000,
-  dbFilter: 'all',
-  tagColor: 'none',
-  aliases: [],
-  ssl: {
-    enabled: false,
-    certFile: '',
-    keyFile: '',
-    caFile: '',
-    rejectUnauthorized: false,
-    servername: ''
-  },
-  ssh: {
-    enabled: false,
-    host: '',
-    port: 22,
-    authType: 'password',
-    username: '',
-    password: '',
-    privateKeyFile: ''
-  },
-  sentinel: {
-    enabled: false,
-    masterGroup: 'mymaster',
-    masterPassword: '',
-    masterUsername: ''
-  },
-  cluster: {
-    enabled: false
-  },
-  proxy: {
-    type: 'none',
-    protocol: 'http',
-    host: '',
-    port: 0,
-    authEnabled: false,
-    username: '',
-    password: ''
-  }
-})
-
-const formData = ref(defaultFormData())
-
-// 监听 connection 变化，填充表单
-watch(() => props.connection, (newConnection) => {
-  if (newConnection) {
-    isEdit.value = true
-    formData.value = {
-      name: newConnection.name || '',
-      groupId: newConnection.groupId || null,
-      protocol: newConnection.protocol || 'tcp',
-      host: newConnection.host || '127.0.0.1',
-      port: newConnection.port || 6379,
-      password: newConnection.password || '',
-      username: newConnection.username || '',
-      keyFilter: newConnection.keyFilter || '*',
-      keySeparator: newConnection.keySeparator || ':',
-      connectTimeout: newConnection.connectTimeout || 60,
-      executeTimeout: newConnection.executeTimeout || 60,
-      keyView: newConnection.keyView || 'tree',
-      keysPerLoad: newConnection.keysPerLoad || 10000,
-      dbFilter: newConnection.dbFilter || 'all',
-      tagColor: newConnection.tagColor || 'none',
-      aliases: newConnection.aliases || [],
-      ssl: newConnection.ssl || {
-        enabled: false,
-        certFile: '',
-        keyFile: '',
-        caFile: '',
-        rejectUnauthorized: false,
-        servername: ''
-      },
-      ssh: newConnection.ssh || {
-        enabled: false,
-        host: '',
-        port: 22,
-        authType: 'password',
-        username: '',
-        password: '',
-        privateKeyFile: ''
-      },
-      sentinel: newConnection.sentinel || {
-        enabled: false,
-        masterGroup: 'mymaster',
-        masterPassword: '',
-        masterUsername: ''
-      },
-      cluster: newConnection.cluster || {
-        enabled: false
-      },
-      proxy: newConnection.proxy || {
-        type: 'none',
-        protocol: 'http',
-        host: '',
-        port: 0,
-        authEnabled: false,
-        username: '',
-        password: ''
-      }
-    }
-  } else {
-    isEdit.value = false
-    resetForm()
-  }
-}, {immediate: true})
-
-// 监听 visible 变化，重置表单
-watch(() => props.visible, (newVisible) => {
-  if (!newVisible) {
-    resetForm()
-    isEdit.value = false
-  } else {
-    activeTab.value = 'general'
-  }
-})
-
-function resetForm() {
-  formData.value = defaultFormData()
+// 组件映射表
+const componentMap = {
+  GeneralConfig,
+  AdvancedConfig,
+  DatabaseAlias,
+  SslConfig,
+  SshConfig,
+  SentinelConfig,
+  ClusterConfig,
+  ProxyConfig
 }
 
-function handleBrowse(type) {
-  // TODO: 实现文件选择对话框
-  console.log('浏览文件:', type)
-}
+// 使用组合式函数
+const {
+  activeTab,
+  isEdit,
+  formData,
+  currentTab,
+  tabs,
+  updateFormData,
+  switchTab,
+  submitForm,
+  cancelForm
+} = useConnectionForm(props, emit)
 
-function handleAutoQuery() {
-  // TODO: 实现自动查询组名功能
-  console.log('自动查询组名')
-}
-
-function testConnection() {
-  // TODO: 实现测试连接功能
-  console.log('测试连接:', formData.value)
-}
-
-function parseClipboardUrl() {
-  // TODO: 实现解析剪切板URL功能
-  console.log('解析剪切板URL')
-}
-
-function handleSubmit() {
-  emit('submit', {...formData.value})
-  emit('update:visible', false)
-}
-
-function handleCancel() {
-  emit('cancel')
-  emit('update:visible', false)
-}
+const {
+  handleBrowse,
+  handleAutoQuery,
+  testConnection,
+  parseClipboardUrl
+} = useConnectionActions()
 </script>
 
 <style scoped>

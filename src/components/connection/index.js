@@ -14,3 +14,11 @@ export {default as FileInput} from './shared/FileInput.vue'
 export {default as AddressInput} from './shared/AddressInput.vue'
 export {default as ToggleGroup} from './shared/ToggleGroup.vue'
 export {default as ColorPicker} from './shared/ColorPicker.vue'
+
+// 导出配置和工具函数
+export * from './config.js'
+export * from './utils.js'
+
+// 导出组合式函数
+export {useConnectionForm} from './composables/useConnectionForm.js'
+export {useConnectionActions} from './composables/useConnectionActions.js'
