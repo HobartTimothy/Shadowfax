@@ -8,64 +8,81 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="workspace">
-    <section class="panel panel--upload">
-      <div id="dropzone" class="dropzone" tabindex="0">
-        <input id="file-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" hidden />
-        <div class="dropzone__inner">
-          <div class="dropzone__icon" aria-hidden="true">☁</div>
-          <p class="dropzone__hint">拖拽上传 或 <button type="button" id="pick-file" class="link-btn">点击上传</button></p>
+  <main class="app-shell">
+    <aside id="sidebar" class="sidebar">
+      <button id="sidebar-toggle" type="button" class="btn btn--ghost sidebar-toggle" aria-expanded="true">
+        收起侧边栏
+      </button>
+
+      <nav class="menu-tree" aria-label="功能菜单">
+        <button id="menu-image-toggle" type="button" class="menu-tree__group" aria-expanded="true">图片处理</button>
+        <div id="menu-image-sub" class="menu-tree__sub">
+          <button id="menu-watermark" type="button" class="menu-tree__item menu-tree__item--active">图片水印处理</button>
         </div>
+      </nav>
+    </aside>
+
+    <section id="watermark-page" class="page page--active" data-page="watermark">
+      <div class="workspace">
+        <section class="panel panel--upload">
+          <div id="dropzone" class="dropzone" tabindex="0">
+            <input id="file-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" hidden />
+            <div class="dropzone__inner">
+              <div class="dropzone__icon" aria-hidden="true">☁</div>
+              <p class="dropzone__hint">拖拽上传 或 <button type="button" id="pick-file" class="link-btn">点击上传</button></p>
+            </div>
+          </div>
+          <p class="hint">jpg/png 文件，大小不超过 500kb</p>
+        </section>
+
+        <section class="panel panel--controls">
+          <label class="field">
+            <span class="field__label">水印文本</span>
+            <input id="wm-text" type="text" class="input" value="测试水印" maxlength="64" />
+          </label>
+
+          <div class="field field--slider">
+            <span class="field__label">透明度</span>
+            <input id="wm-opacity" type="range" min="5" max="100" value="50" />
+            <input id="wm-opacity-num" class="input input--num" type="number" min="5" max="100" value="50" />
+          </div>
+
+          <div class="field field--slider">
+            <span class="field__label">角度</span>
+            <input id="wm-angle" type="range" min="-90" max="90" value="30" />
+            <input id="wm-angle-num" class="input input--num" type="number" min="-90" max="90" value="30" />
+          </div>
+
+          <div class="field field--slider">
+            <span class="field__label">字号</span>
+            <input id="wm-size" type="range" min="12" max="120" value="50" />
+            <input id="wm-size-num" class="input input--num" type="number" min="12" max="120" value="50" />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="mask-toolbar">
+            <button type="button" id="btn-mask-mode" class="btn btn--ghost">添加打码区域</button>
+            <button type="button" id="btn-mask-undo" class="btn btn--ghost" disabled>撤销上一块</button>
+            <button type="button" id="btn-mask-clear" class="btn btn--ghost" disabled>清除全部打码</button>
+          </div>
+          <p id="mask-hint" class="mask-hint">在下方预览图上拖拽矩形，对敏感信息进行像素打码（仅本地处理）。</p>
+
+          <div class="export-row">
+            <button type="button" id="btn-export" class="btn btn--primary" disabled>导出 PNG</button>
+          </div>
+        </section>
       </div>
-      <p class="hint">jpg/png 文件，大小不超过 500kb</p>
-    </section>
 
-    <section class="panel panel--controls">
-      <label class="field">
-        <span class="field__label">水印文本</span>
-        <input id="wm-text" type="text" class="input" value="测试水印" maxlength="64" />
-      </label>
-
-      <div class="field field--slider">
-        <span class="field__label">透明度</span>
-        <input id="wm-opacity" type="range" min="5" max="100" value="50" />
-        <input id="wm-opacity-num" class="input input--num" type="number" min="5" max="100" value="50" />
-      </div>
-
-      <div class="field field--slider">
-        <span class="field__label">角度</span>
-        <input id="wm-angle" type="range" min="-90" max="90" value="30" />
-        <input id="wm-angle-num" class="input input--num" type="number" min="-90" max="90" value="30" />
-      </div>
-
-      <div class="field field--slider">
-        <span class="field__label">字号</span>
-        <input id="wm-size" type="range" min="12" max="120" value="50" />
-        <input id="wm-size-num" class="input input--num" type="number" min="12" max="120" value="50" />
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="mask-toolbar">
-        <button type="button" id="btn-mask-mode" class="btn btn--ghost">添加打码区域</button>
-        <button type="button" id="btn-mask-undo" class="btn btn--ghost" disabled>撤销上一块</button>
-        <button type="button" id="btn-mask-clear" class="btn btn--ghost" disabled>清除全部打码</button>
-      </div>
-      <p id="mask-hint" class="mask-hint">在下方预览图上拖拽矩形，对敏感信息进行像素打码（仅本地处理）。</p>
-
-      <div class="export-row">
-        <button type="button" id="btn-export" class="btn btn--primary" disabled>导出 PNG</button>
-      </div>
+      <section class="preview-wrap">
+        <h2 class="preview-title">预览</h2>
+        <div id="canvas-shell" class="canvas-shell">
+          <canvas id="canvas"></canvas>
+          <div id="canvas-placeholder" class="canvas-placeholder">上传图片后在此预览</div>
+        </div>
+      </section>
     </section>
   </main>
-
-  <section class="preview-wrap">
-    <h2 class="preview-title">预览</h2>
-    <div id="canvas-shell" class="canvas-shell">
-      <canvas id="canvas"></canvas>
-      <div id="canvas-placeholder" class="canvas-placeholder">上传图片后在此预览</div>
-    </div>
-  </section>
 
   <script src="app.js"></script>
 </body>

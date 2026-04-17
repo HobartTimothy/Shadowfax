@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -52,8 +52,29 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
+function buildAppMenu() {
+  const template = [
+    {
+      label: '图片处理',
+      submenu: [
+        {
+          label: '图片水印处理',
+          click: () => {
+            const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+            if (win) {
+              win.focus();
+            }
+          },
+        },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 app.whenReady().then(() => {
   attachNetworkGuards(session.defaultSession);
+  buildAppMenu();
   createWindow();
 });
 

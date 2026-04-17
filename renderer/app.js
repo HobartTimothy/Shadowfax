@@ -14,6 +14,12 @@
   const btnMaskUndo = document.getElementById('btn-mask-undo');
   const btnMaskClear = document.getElementById('btn-mask-clear');
   const maskHint = document.getElementById('mask-hint');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const menuImageToggle = document.getElementById('menu-image-toggle');
+  const menuImageSub = document.getElementById('menu-image-sub');
+  const menuWatermark = document.getElementById('menu-watermark');
+  const watermarkPage = document.getElementById('watermark-page');
 
   const wmText = document.getElementById('wm-text');
   const wmOpacity = document.getElementById('wm-opacity');
@@ -215,6 +221,37 @@
   bindRangePair(wmOpacity, wmOpacityNum, 5, 100);
   bindRangePair(wmAngle, wmAngleNum, -90, 90);
   bindRangePair(wmSize, wmSizeNum, 12, 120);
+
+  function showWatermarkPage() {
+    if (watermarkPage) {
+      watermarkPage.classList.add('page--active');
+    }
+    if (menuWatermark) {
+      menuWatermark.classList.add('menu-tree__item--active');
+    }
+    schedulePaint();
+  }
+
+  if (sidebar && sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      const collapsed = sidebar.classList.toggle('sidebar--collapsed');
+      sidebarToggle.textContent = collapsed ? '展开侧边栏' : '收起侧边栏';
+      sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+
+  if (menuImageToggle && menuImageSub) {
+    menuImageToggle.addEventListener('click', () => {
+      const expanded = menuImageToggle.getAttribute('aria-expanded') === 'true';
+      const next = !expanded;
+      menuImageToggle.setAttribute('aria-expanded', String(next));
+      menuImageSub.classList.toggle('menu-tree__sub--hidden', !next);
+    });
+  }
+
+  if (menuWatermark) {
+    menuWatermark.addEventListener('click', showWatermarkPage);
+  }
 
   wmText.addEventListener('input', schedulePaint);
 
