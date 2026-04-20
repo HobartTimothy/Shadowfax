@@ -233,9 +233,17 @@
   }
 
   if (sidebar && sidebarToggle) {
+    const appShell = document.querySelector('.app-shell');
     sidebarToggle.addEventListener('click', () => {
       const collapsed = sidebar.classList.toggle('sidebar--collapsed');
-      sidebarToggle.textContent = collapsed ? '展开侧边栏' : '收起侧边栏';
+      if (appShell) {
+        appShell.classList.toggle('app-shell--sidebar-collapsed', collapsed);
+      }
+      const toggleText = sidebarToggle.querySelector('.sidebar-toggle__text');
+      if (toggleText) {
+        toggleText.textContent = collapsed ? '展开侧边栏' : '收起侧边栏';
+      }
+      sidebarToggle.setAttribute('aria-label', collapsed ? '展开侧边栏' : '收起侧边栏');
       sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
     });
   }

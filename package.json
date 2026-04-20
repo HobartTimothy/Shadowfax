@@ -2,7 +2,7 @@
   "name": "shadowfax",
   "version": "1.0.0",
   "private": true,
-  "description": "本地证件打码与水印（Electron + Canvas）",
+  "description": "本地图片处理（Electron + Canvas）",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
